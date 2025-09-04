@@ -1,5 +1,6 @@
-# SCANNER v3
+# Scanner v3
+Modern project analyzer for LLM context - Part of EternalMax
 
-Modern project analyzer for LLM context generation.
-
-Part of Eternal Max Project.
+## 12 Analyzers:
+- api, database, dependencies, docker, env, errors
+- functions, git, manifest, security, todos, webhooks
