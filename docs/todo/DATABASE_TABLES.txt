@@ -1,0 +1,224 @@
+-- =============================================================================
+-- ETERNAL MAX ANALYZER - DATABASE SCHEMA
+-- Version: 2.1
+-- Date: 2025-01-30
+-- =============================================================================
+-- 
+-- Эти таблицы интегрируют Bash-анализатор проектов с основной системой Eternal Max.
+-- Анализатор сканирует файловую структуру проекта и сохраняет результаты в БД.
+--
+-- СВЯЗЬ С ОСНОВНОЙ СИСТЕМОЙ:
+-- - em_projects_new - проекты (контейнеры для диалогов и знаний)
+-- - em_snapshots - снапшоты (структурированная память системы)
+-- - em_analysis_queue - очередь задач анализа
+-- - em_conversations/em_messages - диалоги с LLM
+-- - em_phases_new - фазы развития проекта
+--
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- ТАБЛИЦА: em_analysis_results
+-- -----------------------------------------------------------------------------
+-- Основная таблица результатов анализа. Каждая запись = один запуск анализатора.
+-- Хранит метаданные о процессе анализа: когда, что, сколько времени заняло.
+-- -----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `em_analysis_results`;
+CREATE TABLE `em_analysis_results` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT 'Уникальный ID записи анализа',
+  
+  `project_id` int NOT NULL COMMENT 'ID проекта из em_projects_new. Связывает анализ с конкретным проектом',
+  
+  `timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Когда был запущен анализ',
+  
+  `analyzer_version` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Версия анализатора (например, 2.0). Важно для отслеживания изменений в логике анализа',
+  
+  `analysis_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Тип анализа: full (все модули), essential (основные), или конкретные модули',
+  
+  `status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Статус: pending, processing, completed, failed, cancelled',
+  
+  `total_files` int DEFAULT '0' COMMENT 'Общее количество проанализированных файлов',
+  
+  `total_lines` int DEFAULT '0' COMMENT 'Общее количество строк кода (сейчас не используется, зарезервировано)',
+  
+  `execution_time` int DEFAULT '0' COMMENT 'Время выполнения в секундах',
+  
+  `created_by` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Кто запустил: analyzer (сам анализатор), user (пользователь), cron (планировщик)',
+  
+  `error_message` text COLLATE utf8mb4_unicode_ci COMMENT 'Сообщение об ошибке, если status = failed',
+  
+  PRIMARY KEY (`id`),
+  KEY `idx_timestamp` (`timestamp`) COMMENT 'Индекс для быстрой выборки по времени',
+  KEY `idx_project` (`project_id`) COMMENT 'Индекс для выборки всех анализов проекта',
+  KEY `idx_status` (`status`) COMMENT 'Индекс для фильтрации по статусу',
+  
+  CONSTRAINT `em_analysis_results_ibfk_1` 
+    FOREIGN KEY (`project_id`) 
+    REFERENCES `em_projects_new` (`project_id`) 
+    ON DELETE CASCADE COMMENT 'При удалении проекта удаляются все его анализы'
+    
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Результаты анализа проектов. Каждая строка = один запуск анализатора Eternal Max';
+
+-- -----------------------------------------------------------------------------
+-- ТАБЛИЦА: em_analysis_details
+-- -----------------------------------------------------------------------------
+-- Детальные результаты по каждому модулю анализатора.
+-- Один анализ (em_analysis_results) может иметь много деталей (по одной на модуль).
+-- -----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `em_analysis_details`;
+CREATE TABLE `em_analysis_details` (
+  `id` int NOT NULL AUTO_INCREMENT COMMENT 'Уникальный ID детальной записи',
+  
+  `analysis_id` int DEFAULT NULL COMMENT 'Ссылка на em_analysis_results.id - к какому анализу относится',
+  
+  `analyzer_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Имя модуля анализатора. Возможные значения:
+    - manifest: структура проекта и точки входа
+    - db_schema: схема базы данных
+    - api: REST/GraphQL endpoints
+    - business: бизнес-логика, TODOs, валидации
+    - configuration: настройки, env файлы, Docker
+    - dependencies: граф зависимостей
+    - export: экспорт исходного кода
+    - functions: документация функций
+    - dataflow: потоки данных и безопасность
+    - coverage: тестовое покрытие
+    - workflow: CI/CD пайплайны',
+  
+  `result_type` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Тип результата. Сейчас всегда "json", в будущем может быть "xml", "yaml"',
+  
+  `result_content` longtext COLLATE utf8mb4_unicode_ci COMMENT 'JSON с результатами модуля. Структура зависит от модуля:
+    - manifest: {"project": {...}, "structure": {...}, "files": {...}}
+    - api: {"endpoints": {...}, "methods": {...}}
+    - и т.д. (каждый модуль имеет свою структуру)',
+  
+  `file_path` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Путь к файлу с результатами на диске (например, ./output/20250130_120000/data/manifest.json)',
+  
+  `file_size` int DEFAULT '0' COMMENT 'Размер файла результатов в байтах',
+  
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Когда была создана запись',
+  
+  PRIMARY KEY (`id`),
+  KEY `idx_analysis` (`analysis_id`) COMMENT 'Индекс для быстрой выборки всех деталей одного анализа',
+  KEY `idx_analyzer` (`analyzer_name`) COMMENT 'Индекс для выборки результатов конкретного модуля',
+  
+  CONSTRAINT `em_analysis_details_ibfk_1` 
+    FOREIGN KEY (`analysis_id`) 
+    REFERENCES `em_analysis_results` (`id`) 
+    ON DELETE CASCADE COMMENT 'При удалении анализа удаляются все его детали'
+    
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci 
+COMMENT='Детальные результаты анализа по каждому модулю. Один анализ может иметь до 11 деталей (по числу модулей)';
+
+-- -----------------------------------------------------------------------------
+-- ТРИГГЕР: Автоматическое создание снапшота при завершении анализа
+-- -----------------------------------------------------------------------------
+-- При успешном завершении анализа автоматически создается снапшот в em_snapshots
+-- для интеграции с основной системой памяти Eternal Max
+-- -----------------------------------------------------------------------------
+
+DELIMITER $$
+
+DROP TRIGGER IF EXISTS `after_analysis_complete`$$
+
+CREATE TRIGGER `after_analysis_complete`
+AFTER INSERT ON `em_analysis_results`
+FOR EACH ROW
+BEGIN
+    -- Только для успешно завершенных анализов
+    IF NEW.status = 'completed' THEN
+        -- Создаем снапшот в основной системе памяти
+        INSERT INTO em_snapshots (
+            snapshot_type,      -- Тип: 'project' (снапшот проекта)
+            entity_id,          -- ID сущности (= project_id)
+            project_id,         -- ID проекта
+            snapshot_content,   -- JSON с метаданными анализа
+            importance,         -- Важность 0.75 (выше среднего)
+            created_by         -- Кто создал: 'analyzer'
+        ) VALUES (
+            'project',
+            NEW.project_id,
+            NEW.project_id,
+            JSON_OBJECT(
+                'analysis_id', NEW.id,
+                'analyzer_version', NEW.analyzer_version,
+                'analysis_type', NEW.analysis_type,
+                'total_files', NEW.total_files,
+                'execution_time', NEW.execution_time,
+                'timestamp', NEW.timestamp
+            ),
+            0.75,
+            'analyzer'
+        );
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------------------------------
+-- ИНДЕКСЫ И ОПТИМИЗАЦИЯ
+-- -----------------------------------------------------------------------------
+
+-- Составной индекс для частых запросов типа:
+-- "Покажи все completed анализы проекта X за последний месяц"
+ALTER TABLE em_analysis_results 
+  ADD INDEX idx_project_status_time (`project_id`, `status`, `timestamp` DESC);
+
+-- Составной индекс для запросов типа:
+-- "Покажи все результаты модуля api для анализа X"
+ALTER TABLE em_analysis_details 
+  ADD INDEX idx_analysis_analyzer (`analysis_id`, `analyzer_name`);
+
+-- -----------------------------------------------------------------------------
+-- ПРИМЕРЫ ИСПОЛЬЗОВАНИЯ
+-- -----------------------------------------------------------------------------
+
+-- 1. Получить последний анализ проекта:
+-- SELECT * FROM em_analysis_results 
+-- WHERE project_id = 1 
+-- ORDER BY timestamp DESC 
+-- LIMIT 1;
+
+-- 2. Получить все детали последнего анализа:
+-- SELECT ad.* 
+-- FROM em_analysis_details ad
+-- JOIN em_analysis_results ar ON ad.analysis_id = ar.id
+-- WHERE ar.project_id = 1
+-- ORDER BY ar.timestamp DESC, ad.analyzer_name
+-- LIMIT 11;
+
+-- 3. Получить JSON результат конкретного модуля:
+-- SELECT result_content 
+-- FROM em_analysis_details 
+-- WHERE analysis_id = 123 AND analyzer_name = 'api';
+
+-- 4. Статистика анализов за месяц:
+-- SELECT 
+--   DATE(timestamp) as date,
+--   COUNT(*) as analyses_count,
+--   AVG(execution_time) as avg_time,
+--   SUM(total_files) as total_files_analyzed
+-- FROM em_analysis_results
+-- WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+-- GROUP BY DATE(timestamp);
+
+-- -----------------------------------------------------------------------------
+-- ВАЖНЫЕ ЗАМЕТКИ
+-- -----------------------------------------------------------------------------
+-- 
+-- 1. result_content в em_analysis_details - это LONGTEXT (до 4GB).
+--    Для больших проектов результаты могут быть объемными.
+--
+-- 2. Триггер after_analysis_complete создает снапшот автоматически.
+--    Если не нужна интеграция с em_snapshots, триггер можно удалить.
+--
+-- 3. project_id должен существовать в em_projects_new.
+--    Если проекта нет, анализ не сохранится (FOREIGN KEY constraint).
+--
+-- 4. Все временные метки в UTC. Конвертируйте при отображении.
+--
+-- 5. Модули анализатора независимы - можно запускать выборочно.
+--    Не все 11 модулей обязательны для каждого анализа.
+--
+-- =============================================================================

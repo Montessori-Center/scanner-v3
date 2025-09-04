@@ -1,0 +1,7 @@
+__pycache__/
+.venv/
+.env
+.env.bash
+.scanner_cache/
+_backups/
+*.log
