@@ -5,3 +5,17 @@ __pycache__/
 .scanner_cache/
 _backups/
 *.log
+
+# Scan results
+*.json
+
+# Test data
+test_project/
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.Python
