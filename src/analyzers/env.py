@@ -6,6 +6,8 @@ from dotenv import dotenv_values
 import yaml
 import json
 
+
+from src.core.logger import get_logger
 from src.core.base import BaseAnalyzer
 from src.core.models import ScanResult, AnalysisResult
 
@@ -13,6 +15,8 @@ from src.core.models import ScanResult, AnalysisResult
 class EnvAnalyzer(BaseAnalyzer):
     """Find and analyze environment variables from all sources"""
     
+
+    logger = get_logger("env")
     name = "env"
     description = "Environment variables from .env, docker-compose, k8s configs"
     
@@ -32,8 +36,8 @@ class EnvAnalyzer(BaseAnalyzer):
                     vars = dotenv_values(file_path)
                     env_vars.update(vars)
                     sources.append(f".env file: {file.name}")
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error in .env file parsing: {e}")
             
             # 2. docker-compose.yml
             elif file.name in ['docker-compose.yml', 'docker-compose.yaml']:
@@ -45,8 +49,8 @@ class EnvAnalyzer(BaseAnalyzer):
                                 if 'environment' in config and isinstance(config['environment'], dict):
                                     env_vars.update(config['environment'])
                                     sources.append(f"docker-compose: {service}")
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error in docker-compose.yml parsing: {e}")
             
             # 3. Find env vars referenced in code
             elif file.suffix in ['.py', '.js', '.ts', '.php']:
@@ -66,8 +70,8 @@ class EnvAnalyzer(BaseAnalyzer):
                         if var and var not in env_vars:
                             from_code.append(var)
                             env_vars[var] = "***REFERENCED_IN_CODE***"
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error in code environment variable extraction: {e}")
         
         # Mask sensitive values
         masked_vars = {}
