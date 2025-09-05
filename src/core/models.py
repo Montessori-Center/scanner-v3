@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Dict, Any, Optional, List
+from pathlib import Path
 """Data models for Scanner v3"""
 from pydantic import BaseModel, Field
 from pathlib import Path
@@ -54,3 +57,55 @@ class AnalysisResult(BaseModel):
     
     class Config:
         arbitrary_types_allowed = True
+
+
+class ScannerOutput(BaseModel):
+    """Unified output schema for Scanner v3 results"""
+    version: str = "3.0.0"
+    timestamp: datetime
+    scan_info: Dict[str, Any]
+    analyzers: Dict[str, Any]
+    errors: Optional[List[str]] = []
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat(),
+            Path: lambda v: str(v)
+        }
+    
+    def to_json(self) -> str:
+        """Convert to deterministic JSON"""
+        import json
+        return json.dumps(
+            self.dict(),
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False,
+            default=str
+        )
+
+
+class ScannerOutput(BaseModel):
+    """Unified output schema for Scanner v3 results"""
+    version: str = "3.0.0"
+    timestamp: datetime
+    scan_info: Dict[str, Any]
+    analyzers: Dict[str, Any]
+    errors: Optional[List[str]] = []
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat(),
+            Path: lambda v: str(v)
+        }
+    
+    def to_json(self) -> str:
+        """Convert to deterministic JSON"""
+        import json
+        return json.dumps(
+            self.dict(),
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False,
+            default=str
+        )
