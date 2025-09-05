@@ -6,11 +6,15 @@ from typing import Dict, List, Any, Optional
 from src.core.base import BaseAnalyzer
 from src.core.models import ScanResult, AnalysisResult
 
+
+from src.core.logger import get_logger
 class DatabaseAnalyzer(BaseAnalyzer):
     """Analyze database schemas, migrations, and ORM models"""
     
     name = "database"
     description = "Extract database schemas, tables, and relationships"
+
+    logger = get_logger("database")
     
     # SQL patterns for different databases
     SQL_PATTERNS = {
@@ -192,8 +196,8 @@ class DatabaseAnalyzer(BaseAnalyzer):
                         return 'sqlite'
                     elif 'GO\n' in content:
                         return 'mssql'
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error in SQL file type detection: {e}")
                     
         # Check config files
         for file_info in scan_result.files:
@@ -206,8 +210,8 @@ class DatabaseAnalyzer(BaseAnalyzer):
                         return 'postgresql'
                     elif 'mongodb' in content.lower():
                         return 'mongodb'
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error in config file database detection: {e}")
                     
         return 'unknown'
     
@@ -225,8 +229,8 @@ class DatabaseAnalyzer(BaseAnalyzer):
                         'datasource': datasource.group(1) if datasource else None,
                         'model_count': len(models)
                     }
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error in Prisma schema analysis: {e}")
                     
         return None
     
@@ -238,6 +242,6 @@ class DatabaseAnalyzer(BaseAnalyzer):
                     content = file_info.path.read_text(errors='ignore')
                     if re.search(r'CREATE\s+(?:UNIQUE\s+)?INDEX', content, re.I):
                         return True
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error in index detection: {e}")
         return False
