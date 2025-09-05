@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # Default exclusions - CRITICAL for performance
     DEFAULT_EXCLUDE: List[str] = [
         "**/.git/**",
-        "**/node_modules/**", 
+        "*node_modules*", 
         "**/vendor/**",
         "**/.venv/**",
         "**/venv/**",
