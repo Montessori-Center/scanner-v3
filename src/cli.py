@@ -10,6 +10,9 @@ from rich.progress import Progress
 
 from src.core.container import Container
 from src.core.config import Settings
+from src.output.markdown import MarkdownFormatter
+from src.output.json import JSONFormatter
+from src.output.context import LLMContextBuilder
 
 app = typer.Typer(
     name="scanner",
@@ -25,9 +28,10 @@ def scan(
     path: Path = typer.Argument(Path.cwd(), help="Project path to scan"),
     profile: str = typer.Option("balanced", "--profile", "-p", help="Performance profile: fast/balanced/deep"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file path"),
-    format: str = typer.Option("json", "--format", "-f", help="Output format: json/markdown/context"),
+    format: str = typer.Option("table", "--format", "-f", help="Output format: table/json/markdown/context"),
+    analyzers: Optional[str] = typer.Option(None, "--analyzers", "-a", help="Comma-separated list of analyzers to run"),
 ):
-    """Scan project and run all analyzers"""
+    """Scan project and run analyzers"""
     
     console.print(f"[cyan]🔍 Scanning project: {path}[/cyan]")
     
@@ -41,28 +45,74 @@ def scan(
     console.print(f"[green]✓ Found {scan_result.total_files} files ({scan_result.total_size:,} bytes)[/green]")
     console.print(f"[green]✓ Scan took {scan_result.duration:.2f} seconds[/green]")
     
-    # Get available analyzers
-    analyzers = container.get_analyzer_names()
-    console.print(f"\n[cyan]📊 Running {len(analyzers)} analyzers...[/cyan]")
+    # Get analyzers to run
+    if analyzers:
+        analyzer_names = [a.strip() for a in analyzers.split(",")]
+    else:
+        analyzer_names = container.get_analyzer_names()
     
-    results = {}
+    console.print(f"\n[cyan]📊 Running {len(analyzer_names)} analyzers...[/cyan]")
+    
+    # Prepare results structure
+    results = {
+        "scan_info": {
+            "path": str(path),
+            "total_files": scan_result.total_files,
+            "total_size": scan_result.total_size,
+            "duration": scan_result.duration
+        },
+        "analyzers": {}
+    }
     
     # Run analyzers with progress bar
     with Progress() as progress:
-        task = progress.add_task("[cyan]Analyzing...", total=len(analyzers))
+        task = progress.add_task("[cyan]Analyzing...", total=len(analyzer_names))
         
-        for analyzer_name in analyzers:
+        for analyzer_name in analyzer_names:
             analyzer = container.get_analyzer(analyzer_name)
             if analyzer:
                 try:
                     result = asyncio.run(analyzer.analyze(scan_result))
-                    results[analyzer_name] = result.data
+                    results["analyzers"][analyzer_name] = result.data
                     progress.advance(task)
                 except Exception as e:
                     console.print(f"[red]✗ {analyzer_name} failed: {e}[/red]")
-                    results[analyzer_name] = {"error": str(e)}
+                    results["analyzers"][analyzer_name] = {"error": str(e)}
     
-    # Show summary table
+    # Format output based on format option
+    if format == "table":
+        # Show summary table (default)
+        _show_summary_table(results["analyzers"])
+    elif format == "json":
+        formatter = JSONFormatter()
+        formatted_output = formatter.format(results)
+        if output:
+            output.write_text(formatted_output)
+            console.print(f"[green]✓ JSON results saved to {output}[/green]")
+        else:
+            console.print(formatted_output)
+    elif format == "markdown":
+        formatter = MarkdownFormatter()
+        formatted_output = formatter.format(results)
+        if output:
+            output.write_text(formatted_output)
+            console.print(f"[green]✓ Markdown report saved to {output}[/green]")
+        else:
+            console.print(formatted_output)
+    elif format == "context":
+        builder = LLMContextBuilder()
+        llm_context = builder.format(results)
+        if output:
+            output.write_text(llm_context)
+            console.print(f"[green]✓ LLM context saved to {output}[/green]")
+        else:
+            console.print(llm_context)
+    else:
+        console.print(f"[red]Unknown format: {format}[/red]")
+
+
+def _show_summary_table(results: dict):
+    """Show summary table of analysis results"""
     table = Table(title="Analysis Summary")
     table.add_column("Analyzer", style="cyan")
     table.add_column("Key Findings", style="white")
@@ -87,42 +137,9 @@ def scan(
                 
             table.add_row(name, finding)
         else:
-            table.add_row(name, f"[red]Error[/red]")
+            table.add_row(name, f"[red]Error: {data['error']}[/red]")
     
     console.print(table)
-    
-    # Save output if requested
-    if output:
-        output_data = {
-            "version": "3.0.0",
-            "project": str(path),
-            "profile": profile,
-            "scan": {
-                "total_files": scan_result.total_files,
-                "total_size": scan_result.total_size,
-                "duration": scan_result.duration
-            },
-            "results": results
-        }
-        
-        # Format output based on selected format
-        if format == "json":
-            with open(output, "w") as f:
-                json.dump(output_data, f, indent=2, default=str)
-        elif format == "markdown":
-            from src.output.markdown import MarkdownFormatter
-            md_content = MarkdownFormatter().format(results)
-            with open(output, "w") as f:
-                f.write(md_content)
-        elif format == "context":
-            from src.output.context import LLMContextBuilder
-            context_content = LLMContextBuilder().build(results)
-            with open(output, "w") as f:
-                f.write(context_content)
-        
-        console.print(f"\n[green]✓ Results saved to {output} (format: {format})[/green]")
-        
-        console.print(f"\n[green]✓ Results saved to {output}[/green]")
 
 
 @app.command()
