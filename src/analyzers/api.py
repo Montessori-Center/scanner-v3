@@ -6,14 +6,20 @@ from typing import List, Dict
 from pathlib import Path
 
 from src.core.base import BaseAnalyzer
+
+from src.core.logger import get_logger
 from src.core.models import ScanResult, AnalysisResult
 
 
 class ApiAnalyzer(BaseAnalyzer):
     """Find and analyze API endpoints in the project"""
     
+
+    logger = get_logger("api")
     name = "api"
     description = "Extract REST API endpoints, GraphQL schemas, WebSocket routes"
+
+    logger = get_logger("api")
     
     # Framework-specific patterns
     PATTERNS = {
@@ -65,8 +71,8 @@ class ApiAnalyzer(BaseAnalyzer):
                 openapi_files.append(file.name)
                 try:
                     endpoints.extend(self._parse_openapi(file_path))
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error in OpenAPI parsing: {e}")
             
             # Check for GraphQL schemas
             elif file.suffix in ['.graphql', '.gql'] or file.name == 'schema.graphql':
@@ -100,8 +106,8 @@ class ApiAnalyzer(BaseAnalyzer):
                                         'file': str(file.path.relative_to(scan.root)),
                                         'framework': framework
                                     })
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error in endpoint extraction: {e}")
         
         # Deduplicate endpoints
         unique_endpoints = []
@@ -153,7 +159,7 @@ class ApiAnalyzer(BaseAnalyzer):
                                     'file': file_path.name,
                                     'framework': 'openapi'
                                 })
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error in OpenAPI specification parsing: {e}")
         
         return endpoints
