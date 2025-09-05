@@ -17,7 +17,6 @@ class SecurityAnalyzer(BaseAnalyzer):
     logger = get_logger("security")
     description = "Find potential security issues and vulnerable patterns"
 
-    logger = get_logger("security")
     
     # Security patterns to check
     PATTERNS = {

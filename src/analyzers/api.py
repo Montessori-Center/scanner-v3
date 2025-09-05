@@ -19,7 +19,6 @@ class ApiAnalyzer(BaseAnalyzer):
     name = "api"
     description = "Extract REST API endpoints, GraphQL schemas, WebSocket routes"
 
-    logger = get_logger("api")
     
     # Framework-specific patterns
     PATTERNS = {
