@@ -5,11 +5,15 @@ from typing import Dict, List, Any
 from src.core.base import BaseAnalyzer
 from src.core.models import ScanResult, AnalysisResult
 
+from src.core.logger import get_logger
+
 class WebhooksAnalyzer(BaseAnalyzer):
     """Find webhooks, external APIs, and integration points"""
     
     name = "webhooks"
     description = "Find webhooks and external integrations"
+
+    logger = get_logger("webhooks")
     
     WEBHOOK_PATTERNS = [
         r'webhook[_\s]?url.*?["\']([^"\']+)',
