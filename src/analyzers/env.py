@@ -46,9 +46,18 @@ class EnvAnalyzer(BaseAnalyzer):
                         compose = yaml.safe_load(f)
                         if compose and 'services' in compose:
                             for service, config in compose.get('services', {}).items():
-                                if 'environment' in config and isinstance(config['environment'], dict):
-                                    env_vars.update(config['environment'])
-                                    sources.append(f"docker-compose: {service}")
+                                if 'environment' in config:
+                                    env = config['environment']
+                                    if isinstance(env, dict):
+                                        env_vars.update(env)
+                                        sources.append(f"docker-compose: {service}")
+                                    elif isinstance(env, list):
+                                        # Handle list format: ["KEY=value", "KEY2=value2"]
+                                        for var in env:
+                                            if '=' in var:
+                                                key, value = var.split('=', 1)
+                                                env_vars[key] = value
+                                        sources.append(f"docker-compose: {service}")
                 except Exception as e:
                     self.logger.debug(f"Error in docker-compose.yml parsing: {e}")
             
