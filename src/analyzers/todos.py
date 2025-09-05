@@ -7,6 +7,7 @@ from src.core.base import BaseAnalyzer
 from src.core.models import ScanResult, AnalysisResult
 
 from src.core.logger import get_logger
+from src.core.constants import Limits
 
 
 class TodosAnalyzer(BaseAnalyzer):
@@ -48,7 +49,7 @@ class TodosAnalyzer(BaseAnalyzer):
                 continue
             
             try:
-                content = file.read_text(errors='ignore')[:100000]  # First 100KB
+                content = file.read_text(errors='ignore')[:Limits.MAX_FILE_CONTENT_SIZE]  # First 100KB
                 file_has_debt = False
                 
                 # Split into lines for line numbers
@@ -68,12 +69,12 @@ class TodosAnalyzer(BaseAnalyzer):
                             todos[tag].append({
                                 'file': str(file.path.relative_to(scan.root)),
                                 'line': line_num,
-                                'text': comment_text[:200]  # Max 200 chars
+                                'text': comment_text[:Limits.MAX_TEXT_PREVIEW]  # Max 200 chars
                             })
                             file_has_debt = True
                             
                             # Limit per tag
-                            if len(todos[tag]) >= 50:
+                            if len(todos[tag]) > Limits.MAX_TODOS_PER_TYPE:
                                 break
                 
                 if file_has_debt:

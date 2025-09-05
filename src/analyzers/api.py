@@ -8,6 +8,7 @@ from pathlib import Path
 from src.core.base import BaseAnalyzer
 
 from src.core.logger import get_logger
+from src.core.constants import Limits
 from src.core.models import ScanResult, AnalysisResult
 
 
@@ -80,7 +81,7 @@ class ApiAnalyzer(BaseAnalyzer):
             # Parse source code for endpoints
             elif file.suffix in ['.py', '.js', '.ts', '.php', '.java', '.rb']:
                 try:
-                    content = file.read_text(errors='ignore')[:200000]  # First 200KB
+                    content = file.read_text(errors='ignore')[:Limits.MAX_FILE_CONTENT_SIZE * 2]  # First 200KB
                     
                     # Try all patterns
                     for framework, patterns in self.PATTERNS.items():
@@ -88,7 +89,7 @@ class ApiAnalyzer(BaseAnalyzer):
                             matches = re.findall(pattern, content, re.IGNORECASE)
                             if matches:
                                 frameworks_detected.add(framework)
-                                for match in matches[:10]:  # Max 10 per file
+                                for match in matches[:Limits.MAX_ITEMS_TO_DISPLAY]:  # Max 10 per file
                                     if isinstance(match, tuple):
                                         if len(match) == 2:
                                             method, path = match
@@ -126,7 +127,7 @@ class ApiAnalyzer(BaseAnalyzer):
         return AnalysisResult(
             analyzer=self.name,
             data={
-                "endpoints": unique_endpoints[:100],  # Top 100
+                "endpoints": unique_endpoints[:Limits.MAX_ENDPOINTS],  # Top 100
                 "total": len(unique_endpoints),
                 "by_method": method_counts,
                 "frameworks": list(frameworks_detected),

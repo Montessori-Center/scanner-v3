@@ -7,6 +7,7 @@ from src.core.base import BaseAnalyzer
 from src.core.logger import get_logger
 from src.core.models import ScanResult, AnalysisResult
 
+from src.core.constants import Limits
 
 class ManifestAnalyzer(BaseAnalyzer):
     """Analyze project structure and basic metadata"""
@@ -52,7 +53,7 @@ class ManifestAnalyzer(BaseAnalyzer):
                 "languages": languages,
                 "extensions": extensions,
                 "entry_points": entry_points,
-                "directories": directories[:20],  # Top 20 dirs
+                "directories": directories[:Limits.MAX_DIRECTORIES_TO_SHOW],  # Top 20 dirs
                 "has_git": (scan.root / ".git").exists(),
                 "has_tests": self._has_tests(scan),
                 "has_docs": self._has_docs(scan),
@@ -148,7 +149,7 @@ class ManifestAnalyzer(BaseAnalyzer):
             if file.name in common_names:
                 entry_points.append(str(file.path.relative_to(scan.root)))
         
-        return entry_points[:10]  # Max 10 entry points
+        return entry_points[:Limits.MAX_ENTRY_POINTS]  # Max 10 entry points
     
     def _get_directories(self, scan: ScanResult) -> List[str]:
         """Get unique directories"""
