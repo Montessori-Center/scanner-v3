@@ -6,6 +6,8 @@ from typing import Dict, List
 from pathlib import Path
 
 from src.core.base import BaseAnalyzer
+
+from src.core.logger import get_logger
 from src.core.models import ScanResult, AnalysisResult
 
 
@@ -14,6 +16,8 @@ class DockerAnalyzer(BaseAnalyzer):
     
     name = "docker"
     description = "Docker, Docker Compose, Kubernetes configurations"
+
+    logger = get_logger("docker")
     
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze containerization configs"""
@@ -141,8 +145,8 @@ class DockerAnalyzer(BaseAnalyzer):
                     elif line.startswith('VOLUME '):
                         volume = line.split(None, 1)[1]
                         info['volumes'].append(volume)
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error in Dockerfile parsing: {e}")
         
         return info
     
@@ -177,8 +181,8 @@ class DockerAnalyzer(BaseAnalyzer):
                                         service_info['ports'].append(port)
                         
                         services.append(service_info)
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error in docker-compose.yml parsing: {e}")
         
         return services
     
@@ -196,8 +200,8 @@ class DockerAnalyzer(BaseAnalyzer):
                 # Check for specific k8s resources
                 k8s_kinds = ['Deployment', 'Service', 'Pod', 'ConfigMap', 'Secret', 'Ingress', 'StatefulSet', 'DaemonSet']
                 return any(f'kind: {kind}' in content for kind in k8s_kinds)
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error in Kubernetes manifest check: {e}")
         
         return False
     
@@ -233,8 +237,8 @@ class DockerAnalyzer(BaseAnalyzer):
                         })
                     
                     return info
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error in Kubernetes manifest parsing: {e}")
         
         return None
     
