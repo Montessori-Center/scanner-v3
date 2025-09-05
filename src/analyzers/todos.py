@@ -116,6 +116,25 @@ class TodosAnalyzer(BaseAnalyzer):
                             })
                             file_has_debt = True
 
+                
+                # Check for multiline comments
+                for style, pattern in self.MULTILINE_PATTERNS.items():
+                    for match in re.finditer(pattern, content, re.DOTALL | re.IGNORECASE):
+                        tag = match.group(1).upper()
+                        comment_text = match.group(2).strip() if match.lastindex > 1 else ''
+                        
+                        # Find line number
+                        line_num = content[:match.start()].count('\n') + 1
+                        
+                        if comment_text and tag in todos:
+                            todos[tag].append({
+                                'file': str(file.path.relative_to(scan.root)),
+                                'line': line_num,
+                                'text': comment_text[:Limits.MAX_TEXT_PREVIEW],
+                                'multiline': True
+                            })
+                            file_has_debt = True
+
                 if file_has_debt:
                     files_with_debt.add(str(file.path.relative_to(scan.root)))
                     
