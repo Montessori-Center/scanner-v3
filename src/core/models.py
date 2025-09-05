@@ -1,11 +1,8 @@
-from datetime import datetime
-from typing import Dict, Any, Optional, List
-from pathlib import Path
 """Data models for Scanner v3"""
-from pydantic import BaseModel, Field
+from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from pydantic import BaseModel, Field
 
 
 class FileInfo(BaseModel):
