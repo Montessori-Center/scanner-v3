@@ -6,12 +6,16 @@ from collections import defaultdict
 from src.core.base import BaseAnalyzer
 from src.core.models import ScanResult, AnalysisResult
 
+from src.core.logger import get_logger
+
 
 class TodosAnalyzer(BaseAnalyzer):
     """Find and analyze TODOs, FIXMEs, HACKs and other technical debt markers"""
     
     name = "todos"
     description = "Extract TODO, FIXME, HACK, BUG comments and technical debt"
+
+    logger = get_logger("todos")
     
     # Patterns for different markers
     PATTERNS = {
@@ -75,8 +79,8 @@ class TodosAnalyzer(BaseAnalyzer):
                 if file_has_debt:
                     files_with_debt.add(str(file.path.relative_to(scan.root)))
                     
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Error analyzing TODOs in file: {e}")
         
         # Calculate statistics
         total_count = sum(len(items) for items in todos.values())
