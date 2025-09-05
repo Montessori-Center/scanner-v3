@@ -1,4 +1,5 @@
 """Environment variables analyzer"""
+from src.core.secrets import mask_secret
 import re
 from typing import Dict, List
 from pathlib import Path

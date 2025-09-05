@@ -1,4 +1,5 @@
 """Security vulnerabilities analyzer"""
+from src.core.secrets import mask_secret
 import re
 from typing import List, Dict
 from pathlib import Path
