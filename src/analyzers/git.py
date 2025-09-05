@@ -7,6 +7,8 @@ import subprocess
 import json
 
 from src.core.base import BaseAnalyzer
+
+from src.core.logger import get_logger
 from src.core.models import ScanResult, AnalysisResult
 
 
@@ -15,6 +17,8 @@ class GitAnalyzer(BaseAnalyzer):
     
     name = "git"
     description = "Git repository history, commits, branches, contributors"
+
+    logger = get_logger("git")
     
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze git repository"""
@@ -84,8 +88,8 @@ class GitAnalyzer(BaseAnalyzer):
             )
             if result.returncode == 0:
                 return result.stdout.strip()
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error running git command: {e}")
         return None
     
     def _get_current_branch(self, root: Path) -> str:
