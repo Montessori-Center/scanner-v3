@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Dict, List
 
 from src.core.base import BaseAnalyzer
+
+from src.core.logger import get_logger
 from src.core.models import ScanResult, AnalysisResult
 
 
@@ -14,6 +16,8 @@ class DependenciesAnalyzer(BaseAnalyzer):
     
     name = "dependencies"
     description = "Extract dependencies from package.json, requirements.txt, etc."
+
+    logger = get_logger("dependencies")
     
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze project dependencies"""
@@ -44,8 +48,8 @@ class DependenciesAnalyzer(BaseAnalyzer):
                                 pkg = line.split('==')[0].split('>=')[0].split('~=')[0]
                                 dependencies['python'].append(pkg)
                     package_managers.append('pip')
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error parsing requirements.txt parsing: {e}")
             
             elif file.name == 'Pipfile':
                 try:
@@ -63,8 +67,8 @@ class DependenciesAnalyzer(BaseAnalyzer):
                                 if pkg:
                                     dependencies['python'].append(pkg)
                     package_managers.append('pipenv')
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error parsing Pipfile parsing: {e}")
             
             elif file.name == 'pyproject.toml':
                 try:
@@ -79,8 +83,8 @@ class DependenciesAnalyzer(BaseAnalyzer):
                         elif 'project' in data:
                             deps = data['project'].get('dependencies', [])
                             dependencies['python'].extend(deps)
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error parsing pyproject.toml parsing: {e}")
             
             # JavaScript/Node
             elif file.name == 'package.json':
@@ -92,8 +96,8 @@ class DependenciesAnalyzer(BaseAnalyzer):
                         if 'devDependencies' in pkg:
                             dependencies['javascript'].extend(pkg['devDependencies'].keys())
                     package_managers.append('npm')
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error parsing package.json parsing: {e}")
             
             # PHP
             elif file.name == 'composer.json':
@@ -105,8 +109,8 @@ class DependenciesAnalyzer(BaseAnalyzer):
                                 if not pkg.startswith('php') and not pkg.startswith('ext-'):
                                     dependencies['php'].append(pkg)
                     package_managers.append('composer')
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error parsing composer.json parsing: {e}")
             
             # Ruby
             elif file.name == 'Gemfile':
@@ -123,8 +127,8 @@ class DependenciesAnalyzer(BaseAnalyzer):
                                     if len(parts) >= 2:
                                         dependencies['ruby'].append(parts[1])
                     package_managers.append('bundler')
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error parsing Gemfile parsing: {e}")
             
             # Go
             elif file.name == 'go.mod':
@@ -136,8 +140,8 @@ class DependenciesAnalyzer(BaseAnalyzer):
                                 if len(parts) >= 2:
                                     dependencies['go'].append(parts[1])
                     package_managers.append('go modules')
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error parsing go.mod parsing: {e}")
             
             # Rust
             elif file.name == 'Cargo.toml':
@@ -147,8 +151,8 @@ class DependenciesAnalyzer(BaseAnalyzer):
                         deps = data.get('dependencies', {})
                         dependencies['rust'].extend(deps.keys())
                     package_managers.append('cargo')
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error parsing Cargo.toml parsing: {e}")
             
             # Lock files
             elif file.name in ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 
