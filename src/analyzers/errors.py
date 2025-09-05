@@ -6,11 +6,15 @@ from collections import Counter
 from src.core.base import BaseAnalyzer
 from src.core.models import ScanResult, AnalysisResult
 
+from src.core.logger import get_logger
+
 class ErrorsAnalyzer(BaseAnalyzer):
     """Analyze error logs and patterns"""
     
     name = "errors"
     description = "Extract errors from logs and code"
+
+    logger = get_logger("errors")
     
     ERROR_PATTERNS = {
         'exception': r'(?i)(exception|error|traceback|stack trace)',
@@ -82,8 +86,8 @@ class ErrorsAnalyzer(BaseAnalyzer):
                     patterns['try_catch'] += len(re.findall(r'\btry\b|\bcatch\b|\bexcept\b', content))
                     patterns['error_callbacks'] += len(re.findall(r'on_?error|error_?handler|catch', content, re.I))
                     patterns['logging'] += len(re.findall(r'log\.|logger\.|console\.', content))
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error analyzing errors in file: {e}")
                     
         return patterns
     
