@@ -6,12 +6,18 @@ from pathlib import Path
 from src.core.base import BaseAnalyzer
 from src.core.models import ScanResult, AnalysisResult
 
+from src.core.logger import get_logger
+
 
 class SecurityAnalyzer(BaseAnalyzer):
     """Analyze potential security vulnerabilities"""
     
     name = "security"
+
+    logger = get_logger("security")
     description = "Find potential security issues and vulnerable patterns"
+
+    logger = get_logger("security")
     
     # Security patterns to check
     PATTERNS = {
@@ -114,8 +120,8 @@ class SecurityAnalyzer(BaseAnalyzer):
                     if 'Strict-Transport-Security' in content:
                         security_headers.append('HSTS')
                         
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Error in security header detection: {e}")
         
         # Check package files for known vulnerable packages
         vulnerable_packages = self._check_vulnerable_packages(scan)
@@ -177,8 +183,8 @@ class SecurityAnalyzer(BaseAnalyzer):
                     for pkg in known_vulnerable['python']:
                         if pkg.split('<')[0] in content.lower():
                             vulnerable.append(f"python:{pkg}")
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error checking Python packages: {e}")
                     
             elif file.name == 'package.json':
                 try:
@@ -186,8 +192,8 @@ class SecurityAnalyzer(BaseAnalyzer):
                     for pkg in known_vulnerable['javascript']:
                         if pkg.split('<')[0] in content.lower():
                             vulnerable.append(f"javascript:{pkg}")
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error checking JavaScript packages: {e}")
         
         return vulnerable
     
