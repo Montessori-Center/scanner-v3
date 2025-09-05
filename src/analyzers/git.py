@@ -1,4 +1,5 @@
 """Git repository analyzer"""
+import shutil
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
@@ -17,6 +18,16 @@ class GitAnalyzer(BaseAnalyzer):
     
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze git repository"""
+
+        # Check if git is installed
+        if not shutil.which("git"):
+            return AnalysisResult(
+                analyzer=self.name,
+                data={
+                    "has_git": False,
+                    "error": "Git is not installed on the system"
+                }
+            )
         
         git_dir = scan.root / ".git"
         
