@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 from typing import Dict, List, Any
 from src.core.base import BaseAnalyzer
+
+from src.core.logger import get_logger
 from src.core.models import ScanResult, AnalysisResult
 
 class FunctionsAnalyzer(BaseAnalyzer):
@@ -11,6 +13,8 @@ class FunctionsAnalyzer(BaseAnalyzer):
     
     name = "functions"
     description = "Extract function signatures and documentation"
+
+    logger = get_logger("functions")
     
     async def analyze(self, scan_result: ScanResult) -> AnalysisResult:
         """Analyze functions and classes"""
@@ -63,8 +67,8 @@ class FunctionsAnalyzer(BaseAnalyzer):
                         'methods': [n.name for n in node.body if isinstance(n, ast.FunctionDef)],
                         'has_doc': ast.get_docstring(node) is not None
                     })
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error analyzing Python file: {e}")
             
         return functions[:20], classes[:10]
     
@@ -93,8 +97,8 @@ class FunctionsAnalyzer(BaseAnalyzer):
                     'type': 'arrow'
                 })
                 
-        except:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Error analyzing JavaScript file: {e}")
             
         return functions[:20]
     
