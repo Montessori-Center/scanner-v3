@@ -10,6 +10,7 @@ from rich.table import Table
 from rich.progress import Progress
 
 from src.core.container import Container
+from src.core.validators import InputValidator
 from src.core.config import Settings
 from src.output.markdown import MarkdownFormatter
 from src.output.json import JSONFormatter
@@ -57,6 +58,11 @@ def scan(
     parallel: bool = typer.Option(True, "--parallel/--sequential", help="Run analyzers in parallel or sequential"),
 ):
     """Scan project and run analyzers"""
+    
+    # Validate input path
+    if not InputValidator.validate_path(path):
+        console.print(f"[red]❌ Invalid or unsafe path: {path}[/red]")
+        return
     
     console.print(f"[cyan]🔍 Scanning project: {path}[/cyan]")
     
