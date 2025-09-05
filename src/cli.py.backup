@@ -25,7 +25,6 @@ def scan(
     path: Path = typer.Argument(Path.cwd(), help="Project path to scan"),
     profile: str = typer.Option("balanced", "--profile", "-p", help="Performance profile: fast/balanced/deep"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file path"),
-    format: str = typer.Option("json", "--format", "-f", help="Output format: json/markdown/context"),
 ):
     """Scan project and run all analyzers"""
     
@@ -105,22 +104,8 @@ def scan(
             "results": results
         }
         
-        # Format output based on selected format
-        if format == "json":
-            with open(output, "w") as f:
-                json.dump(output_data, f, indent=2, default=str)
-        elif format == "markdown":
-            from src.output.markdown import MarkdownFormatter
-            md_content = MarkdownFormatter().format(results)
-            with open(output, "w") as f:
-                f.write(md_content)
-        elif format == "context":
-            from src.output.context import LLMContextBuilder
-            context_content = LLMContextBuilder().build(results)
-            with open(output, "w") as f:
-                f.write(context_content)
-        
-        console.print(f"\n[green]✓ Results saved to {output} (format: {format})[/green]")
+        with open(output, 'w') as f:
+            json.dump(output_data, f, indent=2, default=str)
         
         console.print(f"\n[green]✓ Results saved to {output}[/green]")
 

@@ -1,18 +1,11 @@
 """Configuration module for Scanner v3"""
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
 
 class Settings(BaseSettings):
     """Main configuration for Scanner system"""
-
-    model_config = SettingsConfigDict(
-        env_prefix="SCANNER_",
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore"
-    )
     
     # Performance profile
     profile: str = "balanced"
@@ -66,3 +59,7 @@ class Settings(BaseSettings):
         """Get current profile settings"""
         return self.PROFILES.get(self.profile, self.PROFILES["balanced"])
     
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        env_prefix = "SCANNER_"  # All env vars must start with SCANNER_

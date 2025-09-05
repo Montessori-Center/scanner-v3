@@ -1,6 +1,5 @@
 [tool.poetry]
 packages = [{ include = "scanner", from = "src" }]
-
 name = "scanner"
 version = "3.0.0"
 description = "Modern project analyzer for LLM context generation"
@@ -8,6 +7,7 @@ authors = ["Eternal Max Team <admin@admin.com>"]
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/eternal-max/scanner-v3"
+packages = [{include = "src"}]
 keywords = ["analyzer", "llm", "context", "code-analysis"]
 
 [tool.poetry.dependencies]
@@ -58,10 +58,6 @@ pytest-cov = ">=4.1"            # Coverage plugin for pytest
 mypy = ">=1.5"                  # Static type checker
 black = ">=23.0"                # Code formatter
 ruff = ">=0.1"                  # Fast Python linter
-
-
-[tool.poetry.scripts]
-scanner = "scanner.cli:app"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

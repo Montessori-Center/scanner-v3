@@ -1,0 +1,13 @@
+{
+  "project_type": "unknown",
+  "total_files": 8389,
+  "languages": {
+    "python": 3829,
+    "c": 18,
+    "javascript": 1
+  },
+  "api_endpoints": 129,
+  "dependencies": 27,
+  "security_critical": 47,
+  "todos_high": 144
+}
