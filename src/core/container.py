@@ -17,9 +17,9 @@ class Container:
         self.settings = settings or Settings()
         self._scanner = Scanner(self.settings)
         self.logger = get_logger("container")
-        self._analyzers = self._discover_analyzers()
-        self._analyzers = self._discover_analyzers()
         self._failed_analyzers = {}  # Track failed analyzers
+        self._analyzers = self._discover_analyzers()
+        self._instances = {}
     
     @property
     def scanner(self) -> Scanner:
