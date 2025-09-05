@@ -3,6 +3,8 @@ from typing import List, Dict, Any
 from pathlib import Path
 
 from src.core.base import BaseAnalyzer
+
+from src.core.logger import get_logger
 from src.core.models import ScanResult, AnalysisResult
 
 
@@ -11,6 +13,8 @@ class ManifestAnalyzer(BaseAnalyzer):
     
     name = "manifest"
     description = "Project structure and metadata analysis"
+
+    logger = get_logger("manifest")
     
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze project manifest"""
@@ -154,8 +158,8 @@ class ManifestAnalyzer(BaseAnalyzer):
             if parent != scan.root:
                 try:
                     dirs.add(str(parent.relative_to(scan.root)))
-                except:
-                    pass
+                except ValueError as e:
+                    self.logger.debug(f"Path {parent} not relative to {scan.root}: {e}")
         return sorted(list(dirs))
     
     def _has_tests(self, scan: ScanResult) -> bool:
