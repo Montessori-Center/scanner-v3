@@ -1,13 +1,15 @@
-"""Persistent cache for incremental scanning"""
+"""Persistent cache for incremental scanning with atomic writes"""
 import json
 import hashlib
+import os
+import tempfile
 from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime
 
 
 class PersistentCache:
-    """Cache on disk for incremental runs"""
+    """Cache on disk for incremental runs with atomic operations"""
     
     def __init__(self, cache_dir: Path):
         self.cache_dir = cache_dir
@@ -21,7 +23,8 @@ class PersistentCache:
             try:
                 with open(self.cache_file) as f:
                     return json.load(f)
-            except:
+            except (json.JSONDecodeError, IOError):
+                # If cache is corrupted, start fresh
                 return {}
         return {}
     
@@ -65,9 +68,40 @@ class PersistentCache:
             pass
     
     def save(self):
-        """Save cache to disk"""
+        """Save cache to disk atomically"""
         try:
-            with open(self.cache_file, 'w') as f:
+            # Create temporary file in the same directory (for atomic rename)
+            temp_fd, temp_path = tempfile.mkstemp(
+                dir=str(self.cache_dir),
+                prefix='.scanner_cache_',
+                suffix='.tmp'
+            )
+            
+            # Write to temporary file
+            with os.fdopen(temp_fd, 'w') as f:
                 json.dump(self.cache_data, f, indent=2)
-        except:
-            pass
+            
+            # Atomic rename (on POSIX systems)
+            # On Windows, we need to remove the target first
+            temp_path_obj = Path(temp_path)
+            if os.name == 'nt' and self.cache_file.exists():
+                self.cache_file.unlink()
+            
+            # Rename temporary file to actual cache file
+            temp_path_obj.rename(self.cache_file)
+            
+        except Exception as e:
+            # Clean up temporary file if it exists
+            try:
+                if 'temp_path' in locals():
+                    Path(temp_path).unlink(missing_ok=True)
+            except:
+                pass
+            # Re-raise the original exception
+            raise e
+    
+    def clear(self):
+        """Clear the cache"""
+        self.cache_data = {}
+        if self.cache_file.exists():
+            self.cache_file.unlink()
