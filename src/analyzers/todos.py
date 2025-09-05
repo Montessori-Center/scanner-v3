@@ -8,6 +8,7 @@ from src.core.models import ScanResult, AnalysisResult
 
 from src.core.logger import get_logger
 from src.core.constants import Limits
+from src.core.file_reader import ChunkReader
 
 
 class TodosAnalyzer(BaseAnalyzer):
@@ -49,7 +50,7 @@ class TodosAnalyzer(BaseAnalyzer):
                 continue
             
             try:
-                content = file.read_text(errors='ignore')[:Limits.MAX_FILE_CONTENT_SIZE]  # First 100KB
+                content = ChunkReader.read_limited(file.path)  # First 100KB
                 file_has_debt = False
                 
                 # Split into lines for line numbers
