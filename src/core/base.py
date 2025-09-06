@@ -14,10 +14,10 @@ class BaseAnalyzer(ABC):
     @abstractmethod
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze scan results
-        
+
         Args:
             scan: Results from project scanning
-            
+
         Returns:
             AnalysisResult with analyzer data
         """

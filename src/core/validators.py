@@ -37,11 +37,11 @@ class InputValidator:
     def validate_path(cls, path: Path, base_path: Optional[Path] = None) -> bool:
         """
         Validate path for security issues
-        
+
         Args:
             path: Path to validate
             base_path: Optional base path to restrict access
-            
+
         Returns:
             True if path is safe, False otherwise
         """
@@ -94,11 +94,11 @@ class InputValidator:
     def sanitize_string(cls, input_str: str, max_length: int = 1000) -> str:
         """
         Sanitize string input to prevent injection attacks
-        
+
         Args:
             input_str: String to sanitize
             max_length: Maximum allowed length
-            
+
         Returns:
             Sanitized string
         """
@@ -122,10 +122,10 @@ class InputValidator:
     def validate_analyzers_list(cls, analyzers: str) -> Optional[List[str]]:
         """
         Validate comma-separated list of analyzers
-        
+
         Args:
             analyzers: Comma-separated string of analyzer names
-            
+
         Returns:
             List of valid analyzer names or None if invalid
         """
@@ -154,7 +154,7 @@ class RateLimiter:
     def __init__(self, max_calls: int = 10, time_window: int = 60):
         """
         Initialize rate limiter
-        
+
         Args:
             max_calls: Maximum calls allowed
             time_window: Time window in seconds
@@ -166,7 +166,7 @@ class RateLimiter:
     def check_limit(self) -> bool:
         """
         Check if operation is within rate limit
-        
+
         Returns:
             True if within limit, False otherwise
         """

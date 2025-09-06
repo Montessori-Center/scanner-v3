@@ -12,10 +12,10 @@ class JSONFormatter(BaseFormatter):
 
     def format(self, results: Dict[str, Any]) -> str:
         """Format results as JSON
-        
+
         Args:
             results: Analysis results dictionary
-            
+
         Returns:
             JSON formatted string with indentation
         """

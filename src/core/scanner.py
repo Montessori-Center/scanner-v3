@@ -38,7 +38,7 @@ class Scanner:
                 try:
                     if file_path.stat().st_size > max_size:
                         continue
-                except:
+                except Exception:
                     continue
 
                 # Add to results

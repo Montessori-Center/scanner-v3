@@ -84,7 +84,3 @@ class ScannerOutput(BaseModel):
         )
 
 
-            sort_keys=True,
-            ensure_ascii=False,
-            default=str
-        )

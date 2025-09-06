@@ -14,10 +14,10 @@ class BaseFormatter(ABC):
     @abstractmethod
     def format(self, results: Dict[str, Any]) -> str:
         """Format analysis results
-        
+
         Args:
             results: Dictionary with analysis results from all analyzers
-            
+
         Returns:
             Formatted string representation
         """

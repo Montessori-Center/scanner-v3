@@ -18,11 +18,11 @@ class ChunkReader:
     def read_file_chunks(cls, file_path: Path, chunk_size: int = DEFAULT_CHUNK_SIZE) -> Iterator[str]:
         """
         Read file in chunks
-        
+
         Args:
             file_path: Path to file
             chunk_size: Size of each chunk in bytes
-            
+
         Yields:
             String chunks of the file
         """
@@ -40,11 +40,11 @@ class ChunkReader:
     def read_limited(cls, file_path: Path, max_bytes: int = Limits.MAX_FILE_CONTENT_SIZE) -> str:
         """
         Read limited amount of file content
-        
+
         Args:
             file_path: Path to file
             max_bytes: Maximum bytes to read
-            
+
         Returns:
             File content up to max_bytes
         """
@@ -66,10 +66,10 @@ class ChunkReader:
     def count_lines_chunked(cls, file_path: Path) -> int:
         """
         Count lines in file without loading it all
-        
+
         Args:
             file_path: Path to file
-            
+
         Returns:
             Number of lines
         """
@@ -82,12 +82,12 @@ class ChunkReader:
     def search_in_file(cls, file_path: Path, pattern: str, max_matches: int = 10) -> list:
         """
         Search for pattern in file without loading it all
-        
+
         Args:
             file_path: Path to file
             pattern: Pattern to search
             max_matches: Maximum matches to return
-            
+
         Returns:
             List of matches with line numbers
         """

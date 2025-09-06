@@ -11,12 +11,12 @@ class MarkdownFormatter(BaseFormatter):
 
     def format(self, results: Dict[str, Any]) -> str:
         """Format results as Markdown
-        
+
         Args:
             results: Analysis results dictionary containing:
                 - scan_info: scanning metadata
                 - analyzers: results from each analyzer
-                
+
         Returns:
             Markdown formatted string
         """

@@ -10,10 +10,10 @@ class LLMContextBuilder(BaseFormatter):
 
     def format(self, results: Dict[str, Any]) -> str:
         """Build LLM context from analysis results
-        
+
         Args:
             results: Analysis results dictionary
-            
+
         Returns:
             Optimized context string for LLM consumption
         """
@@ -21,11 +21,11 @@ class LLMContextBuilder(BaseFormatter):
 
     def build(self, results: Dict[str, Any], max_tokens: int = 4000) -> str:
         """Build prioritized context for LLM
-        
+
         Args:
             results: Analysis results
             max_tokens: Maximum tokens (approximate)
-            
+
         Returns:
             Context string optimized for LLM understanding
         """

@@ -37,7 +37,7 @@ class PersistentCache:
                 for chunk in iter(lambda: f.read(4096), b""):
                     hasher.update(chunk)
             return hasher.hexdigest()
-        except:
+        except Exception:
             return ""
 
     def is_file_changed(self, file_path: Path) -> bool:
@@ -52,7 +52,7 @@ class PersistentCache:
             # Check mtime and size
             return (cached["mtime"] != stat.st_mtime or
                     cached["size"] != stat.st_size)
-        except:
+        except Exception:
             return True
 
     def update_file(self, file_path: Path):
@@ -65,7 +65,7 @@ class PersistentCache:
                 "hash": self._calculate_hash(file_path),
                 "scanned": datetime.now().isoformat()
             }
-        except:
+        except Exception:
             pass
 
     def save(self):
@@ -96,7 +96,7 @@ class PersistentCache:
             try:
                 if 'temp_path' in locals():
                     Path(temp_path).unlink(missing_ok=True)
-            except:
+            except Exception:
                 pass
             # Re-raise the original exception
             raise e

@@ -3,10 +3,10 @@
 
 def mask_secret(value: str) -> str:
     """Mask sensitive values in output
-    
+
     Args:
         value: Secret value to mask
-        
+
     Returns:
         Masked string like 'abc***xyz' or '***' for short values
     """
@@ -22,11 +22,11 @@ def mask_secret(value: str) -> str:
 
 def mask_in_dict(data: dict, sensitive_keys: list = None) -> dict:
     """Mask sensitive values in dictionary
-    
+
     Args:
         data: Dictionary to process
         sensitive_keys: List of keys to mask (default: common secret keys)
-        
+
     Returns:
         Dictionary with masked values
     """
