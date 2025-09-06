@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Tests for ManifestAnalyzer"""
 import pytest
 from src.analyzers.manifest import ManifestAnalyzer

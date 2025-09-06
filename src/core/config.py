@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Configuration module for Scanner v3"""
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Dict, Any, Optional

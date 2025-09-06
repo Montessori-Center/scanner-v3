@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Manifest analyzer - project structure and metadata"""
 from typing import List, Dict, Any
 from pathlib import Path

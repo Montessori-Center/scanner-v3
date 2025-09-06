@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Data models for Scanner v3"""
 from datetime import datetime
 from pathlib import Path

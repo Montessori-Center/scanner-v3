@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Webhooks and External Integrations Analyzer"""
 import re
 from pathlib import Path

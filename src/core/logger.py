@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Simple logging configuration for Scanner v3"""
 import logging
 import sys

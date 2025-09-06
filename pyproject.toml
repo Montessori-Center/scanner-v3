@@ -1,113 +1,17 @@
 [tool.poetry]
-packages = [{include = "src"}]
-
-name = "scanner"
+name = "scanner-v3"
 version = "3.0.0"
-description = "Modern project analyzer for LLM context generation"
-authors = ["Eternal Max Team <admin@admin.com>"]
-readme = "README.md"
-license = "MIT"
-repository = "https://github.com/eternal-max/scanner-v3"
-keywords = ["analyzer", "llm", "context", "code-analysis"]
+description = "Modern project analyzer for LLM context"
+authors = ["EternalMax Team"]
+python = "^3.8"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<4.0"
-
-# Core dependencies (5 libraries)
-pydantic = ">=2.5"              # Data validation using Python type hints
-pydantic-settings = ">=2.1"     # Settings management using Pydantic
-typer = ">=0.9"                 # Build CLI apps with Python type hints
-rich = ">=13.7"                 # Rich text and beautiful formatting in terminal
-aiofiles = ">=23.2"             # Async file operations
-
-# Code parsers (7 libraries)
-pygments = ">=2.17"             # Syntax highlighting - supports 500+ languages
-tree-sitter = ">=0.20"          # Incremental parsing library
-astroid = ">=3.0"               # Python AST analysis
-radon = ">=6.0"                 # Code metrics (complexity, maintainability)
-jedi = ">=0.19"                 # Static analysis and autocompletion
-libcst = ">=1.1"                # Concrete Syntax Tree parser and visitor
-sqlparse = ">=0.4"              # SQL parser and formatter
-
-# Dependency analysis (4 libraries)
-pipdeptree = ">=2.13"           # Display Python dependency tree
-requirements-detector = ">=1.2"  # Find and parse requirements files
-safety = ">=3.0"                # Check for known security vulnerabilities
-johnnydep = ">=1.20"            # Recursively resolve dependencies
-
-# Configuration parsing (2 libraries)
-python-dotenv = ">=1.0"         # Load .env files
-pyyaml = ">=6.0"                # YAML parser and emitter
-# Note: tomllib is built-in for Python 3.11+
-
-# Git/VCS integration (2 libraries)
-gitpython = ">=3.1"             # Git operations
-pydriller = ">=2.5"             # Git repository mining and analysis
-
-# Security scanning (1 library + safety above)
-bandit = {extras = ["toml"], version = ">=1.7"}  # Security linter for Python
-
-# Documentation parsing (2 libraries)
-openapi-spec-validator = ">=0.6"  # OpenAPI/Swagger spec validation
-markdown-it-py = ">=3.0"          # Markdown parser
-
-[tool.poetry.group.dev.dependencies]
-pytest = ">=7.4"                # Testing framework
-pytest-asyncio = ">=0.21"       # Async test support
-pytest-cov = ">=4.1"            # Coverage plugin for pytest
-mypy = ">=1.5"                  # Static type checker
-black = ">=23.0"                # Code formatter
-ruff = ">=0.1"                  # Fast Python linter
-
-
-[tool.poetry.scripts]
-scanner = "scanner.cli:app"
+python = "^3.8"
+typer = "^0.9.0"
+rich = "^13.0"
+pydantic = "^2.0"
+aiofiles = "^23.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.black]
-line-length = 100
-target-version = ['py311']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
-[tool.ruff]
-line-length = 100
-target-version = "py311"
-select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "B",   # flake8-bugbear
-    "UP",  # pyupgrade
-]
-ignore = [
-    "E501",  # line too long (handled by black)
-]
-
-[tool.mypy]
-python_version = "3.11"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-ignore_missing_imports = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py", "*_test.py"]
-addopts = [
-    "--strict-markers",
-    "--tb=short",
-    "--asyncio-mode=auto",
-]

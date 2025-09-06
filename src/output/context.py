@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """LLM Context Builder for Scanner v3"""
 from typing import Dict, Any, List
 import json

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Database Schema and Structure Analyzer"""
 import re
 import json

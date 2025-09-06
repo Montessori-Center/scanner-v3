@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Tests for Scanner"""
 import pytest
 from pathlib import Path

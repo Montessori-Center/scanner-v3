@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Main scanner module for project analysis"""
 from pathlib import Path
 from typing import List

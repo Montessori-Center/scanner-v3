@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Git repository analyzer"""
 import shutil
 from pathlib import Path

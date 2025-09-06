@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """JSON formatter for Scanner v3 results"""
 from typing import Dict, Any
 import json

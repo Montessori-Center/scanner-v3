@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Secret masking utilities for Scanner v3"""
 
 def mask_secret(value: str) -> str:

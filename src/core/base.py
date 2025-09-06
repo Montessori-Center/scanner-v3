@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Base class for all analyzers"""
 from abc import ABC, abstractmethod
 from src.core.models import ScanResult, AnalysisResult

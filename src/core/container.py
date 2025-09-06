@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Dependency Injection container with auto-discovery"""
 import pkgutil
 import importlib

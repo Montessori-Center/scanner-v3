@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Security vulnerabilities analyzer"""
 from src.core.secrets import mask_secret
 import re

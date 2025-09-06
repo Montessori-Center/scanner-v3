@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Command-line interface for Scanner v3 with parallel execution"""
 import typer
 import asyncio

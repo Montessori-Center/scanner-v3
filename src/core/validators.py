@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Input validation and security checks for Scanner v3"""
 import os
 import re

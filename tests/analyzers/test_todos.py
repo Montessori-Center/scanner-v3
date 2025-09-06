@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Tests for TodosAnalyzer"""
 import pytest
 from src.analyzers.todos import TodosAnalyzer

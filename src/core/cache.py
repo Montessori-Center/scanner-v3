@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Persistent cache for incremental scanning with atomic writes"""
 import json
 import hashlib

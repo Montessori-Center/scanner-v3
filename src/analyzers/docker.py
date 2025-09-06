@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Docker and Kubernetes configuration analyzer"""
 import json
 import yaml

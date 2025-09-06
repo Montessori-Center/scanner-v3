@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Constants and limits for Scanner v3"""
 
 class Limits:

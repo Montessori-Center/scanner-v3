@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Errors and Logs Analyzer"""
 import re
 from pathlib import Path

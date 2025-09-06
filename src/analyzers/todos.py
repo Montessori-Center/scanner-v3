@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """TODOs and technical debt analyzer"""
 import re
 from typing import Dict, List

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Base formatter class"""
 from abc import ABC, abstractmethod
 from typing import Dict, Any
