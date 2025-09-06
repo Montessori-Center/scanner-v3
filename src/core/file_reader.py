@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Efficient file reading with chunking support"""
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Iterator
+
 from src.core.constants import Limits
 from src.core.logger import get_logger
 
@@ -11,9 +11,9 @@ logger = get_logger("file_reader")
 
 class ChunkReader:
     """Read files in chunks to prevent memory issues"""
-    
+
     DEFAULT_CHUNK_SIZE = 8192  # 8KB chunks
-    
+
     @classmethod
     def read_file_chunks(cls, file_path: Path, chunk_size: int = DEFAULT_CHUNK_SIZE) -> Iterator[str]:
         """
@@ -27,7 +27,7 @@ class ChunkReader:
             String chunks of the file
         """
         try:
-            with open(file_path, 'r', errors='ignore') as f:
+            with open(file_path, errors='ignore') as f:
                 while True:
                     chunk = f.read(chunk_size)
                     if not chunk:
@@ -35,7 +35,7 @@ class ChunkReader:
                     yield chunk
         except Exception as e:
             logger.error(f"Error reading file {file_path}: {e}")
-    
+
     @classmethod
     def read_limited(cls, file_path: Path, max_bytes: int = Limits.MAX_FILE_CONTENT_SIZE) -> str:
         """
@@ -50,7 +50,7 @@ class ChunkReader:
         """
         content = []
         bytes_read = 0
-        
+
         for chunk in cls.read_file_chunks(file_path):
             if bytes_read + len(chunk) > max_bytes:
                 # Add partial chunk to reach limit
@@ -59,9 +59,9 @@ class ChunkReader:
                 break
             content.append(chunk)
             bytes_read += len(chunk)
-        
+
         return ''.join(content)
-    
+
     @classmethod
     def count_lines_chunked(cls, file_path: Path) -> int:
         """
@@ -77,7 +77,7 @@ class ChunkReader:
         for chunk in cls.read_file_chunks(file_path):
             line_count += chunk.count('\n')
         return line_count
-    
+
     @classmethod
     def search_in_file(cls, file_path: Path, pattern: str, max_matches: int = 10) -> list:
         """
@@ -95,7 +95,7 @@ class ChunkReader:
         matches = []
         line_num = 1
         current_line = ""
-        
+
         for chunk in cls.read_file_chunks(file_path):
             for char in chunk:
                 current_line += char
@@ -106,9 +106,9 @@ class ChunkReader:
                             return matches
                     current_line = ""
                     line_num += 1
-        
+
         # Check last line if no newline at end
         if current_line and (pattern in current_line or re.search(pattern, current_line)):
             matches.append((line_num, current_line.strip()))
-        
+
         return matches

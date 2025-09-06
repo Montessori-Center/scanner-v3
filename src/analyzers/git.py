@@ -1,27 +1,24 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Git repository analyzer"""
 import shutil
+import subprocess
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
-from datetime import datetime, timedelta
-import subprocess
-import json
 
 from src.core.base import BaseAnalyzer
-
 from src.core.logger import get_logger
-from src.core.models import ScanResult, AnalysisResult
+from src.core.models import AnalysisResult, ScanResult
 
 
 class GitAnalyzer(BaseAnalyzer):
     """Analyze git repository history and statistics"""
-    
+
     name = "git"
     description = "Git repository history, commits, branches, contributors"
 
     logger = get_logger("git")
-    
+
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze git repository"""
 
@@ -34,9 +31,9 @@ class GitAnalyzer(BaseAnalyzer):
                     "error": "Git is not installed on the system"
                 }
             )
-        
+
         git_dir = scan.root / ".git"
-        
+
         if not git_dir.exists():
             return AnalysisResult(
                 analyzer=self.name,
@@ -45,7 +42,7 @@ class GitAnalyzer(BaseAnalyzer):
                     "message": "Not a git repository"
                 }
             )
-        
+
         # Get git info
         current_branch = self._get_current_branch(scan.root)
         branches = self._get_branches(scan.root)
@@ -54,7 +51,7 @@ class GitAnalyzer(BaseAnalyzer):
         recent_commits = self._get_recent_commits(scan.root, limit=20)
         contributors = self._get_contributors(scan.root)
         file_stats = self._get_file_stats(scan.root)
-        
+
         return AnalysisResult(
             analyzer=self.name,
             data={
@@ -77,7 +74,7 @@ class GitAnalyzer(BaseAnalyzer):
                 "last_commit": recent_commits[0] if recent_commits else None
             }
         )
-    
+
     def _run_git_command(self, cwd: Path, args: List[str]) -> Optional[str]:
         """Run git command safely"""
         try:
@@ -93,12 +90,12 @@ class GitAnalyzer(BaseAnalyzer):
         except Exception as e:
             self.logger.debug(f"Error running git command: {e}")
         return None
-    
+
     def _get_current_branch(self, root: Path) -> str:
         """Get current branch name"""
         branch = self._run_git_command(root, ['rev-parse', '--abbrev-ref', 'HEAD'])
         return branch or 'unknown'
-    
+
     def _get_branches(self, root: Path) -> List[str]:
         """Get all branches"""
         output = self._run_git_command(root, ['branch', '-a'])
@@ -110,14 +107,14 @@ class GitAnalyzer(BaseAnalyzer):
                     branches.append(branch)
             return branches
         return []
-    
+
     def _get_tags(self, root: Path) -> List[str]:
         """Get all tags"""
         output = self._run_git_command(root, ['tag'])
         if output:
             return [tag for tag in output.split('\n') if tag]
         return []
-    
+
     def _get_remotes(self, root: Path) -> List[Dict[str, str]]:
         """Get remote repositories"""
         output = self._run_git_command(root, ['remote', '-v'])
@@ -135,7 +132,7 @@ class GitAnalyzer(BaseAnalyzer):
                         seen.add(parts[0])
             return remotes
         return []
-    
+
     def _get_recent_commits(self, root: Path, limit: int = 20) -> List[Dict[str, str]]:
         """Get recent commits"""
         format_str = '%H|%an|%ae|%at|%s'
@@ -143,7 +140,7 @@ class GitAnalyzer(BaseAnalyzer):
             root,
             ['log', f'--format={format_str}', f'-{limit}']
         )
-        
+
         if output:
             commits = []
             for line in output.split('\n'):
@@ -159,14 +156,14 @@ class GitAnalyzer(BaseAnalyzer):
                         })
             return commits
         return []
-    
+
     def _get_contributors(self, root: Path) -> List[Dict[str, int]]:
         """Get contributors with commit counts"""
         output = self._run_git_command(
             root,
             ['shortlog', '-sn', '--no-merges']
         )
-        
+
         if output:
             contributors = []
             for line in output.split('\n'):
@@ -179,14 +176,14 @@ class GitAnalyzer(BaseAnalyzer):
                         })
             return sorted(contributors, key=lambda x: x['commits'], reverse=True)
         return []
-    
+
     def _count_commits(self, root: Path) -> int:
         """Count total commits"""
         output = self._run_git_command(root, ['rev-list', '--count', 'HEAD'])
         if output and output.isdigit():
             return int(output)
         return 0
-    
+
     def _get_file_stats(self, root: Path) -> Dict[str, int]:
         """Get file change statistics"""
         # Get stats for last 100 commits
@@ -194,13 +191,13 @@ class GitAnalyzer(BaseAnalyzer):
             root,
             ['log', '--stat', '--oneline', '-100']
         )
-        
+
         stats = {
             'files_changed': 0,
             'insertions': 0,
             'deletions': 0
         }
-        
+
         if output:
             # Parse stats from git log
             for line in output.split('\n'):
@@ -219,5 +216,5 @@ class GitAnalyzer(BaseAnalyzer):
                             num = ''.join(filter(str.isdigit, part))
                             if num:
                                 stats['files_changed'] += int(num)
-        
+
         return stats

@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Command-line interface for Scanner v3 with parallel execution"""
-import typer
 import asyncio
-import json
 import time
 from pathlib import Path
-from typing import List, Optional
-from rich.console import Console
-from rich.table import Table
-from rich.progress import Progress
+from typing import Optional
 
+import typer
+from rich.console import Console
+from rich.progress import Progress
+from rich.table import Table
+
+from src.core.config import Settings
 from src.core.container import Container
 from src.core.validators import InputValidator
-from src.core.config import Settings
-from src.output.markdown import MarkdownFormatter
-from src.output.json import JSONFormatter
 from src.output.context import LLMContextBuilder
+from src.output.json import JSONFormatter
+from src.output.markdown import MarkdownFormatter
 
 app = typer.Typer(
     name="scanner",
@@ -45,7 +44,7 @@ async def run_analyzers_parallel(container, analyzer_names, scan_result):
         analyzer = container.get_analyzer(name)
         if analyzer:
             tasks.append(run_analyzer_async(analyzer, scan_result, name))
-    
+
     results = await asyncio.gather(*tasks)
     return results
 
@@ -60,39 +59,39 @@ def scan(
     parallel: bool = typer.Option(True, "--parallel/--sequential", help="Run analyzers in parallel or sequential"),
 ):
     """Scan project and run analyzers"""
-    
+
     # Validate input path
     if not InputValidator.validate_path(path):
         console.print(f"[red]❌ Invalid or unsafe path: {path}[/red]")
         return
-    
+
     console.print(f"[cyan]🔍 Scanning project: {path}[/cyan]")
-    
+
     # Create container with settings
     settings = Settings(profile=profile)
     container = Container(settings)
-    
+
     # Run scan asynchronously
     async def scan_async():
         scanner = container.scanner
         return await scanner.scan(path)
-    
+
     scan_start = time.time()
     scan_result = asyncio.run(scan_async())
     scan_time = time.time() - scan_start
-    
+
     console.print(f"[green]✓ Found {scan_result.total_files} files ({scan_result.total_size:,} bytes)[/green]")
     console.print(f"[green]✓ Scan took {scan_time:.2f} seconds[/green]")
-    
+
     # Get analyzers to run
     if analyzers:
         analyzer_names = [a.strip() for a in analyzers.split(",")]
     else:
         analyzer_names = container.get_analyzer_names()
-    
+
     mode = "parallel" if parallel else "sequential"
     console.print(f"\n[cyan]📊 Running {len(analyzer_names)} analyzers ({mode})...[/cyan]")
-    
+
     # Prepare results structure
     results = {
         "scan_info": {
@@ -103,17 +102,17 @@ def scan(
         },
         "analyzers": {}
     }
-    
+
     # Run analyzers
     analysis_start = time.time()
-    
+
     if parallel:
         # Parallel execution
         async def run_all():
             return await run_analyzers_parallel(container, analyzer_names, scan_result)
-        
+
         analyzer_results = asyncio.run(run_all())
-        
+
         # Process results
         for name, data, duration, error in analyzer_results:
             results["analyzers"][name] = data
@@ -125,7 +124,7 @@ def scan(
         # Sequential execution (original)
         with Progress() as progress:
             task = progress.add_task("[cyan]Analyzing...", total=len(analyzer_names))
-            
+
             for analyzer_name in analyzer_names:
                 analyzer = container.get_analyzer(analyzer_name)
                 if analyzer:
@@ -139,19 +138,19 @@ def scan(
                     except Exception as e:
                         console.print(f"[red]✗ {analyzer_name} failed: {e}[/red]")
                         results["analyzers"][analyzer_name] = {"error": str(e)}
-    
+
     analysis_time = time.time() - analysis_start
     total_time = time.time() - scan_start
-    
-    console.print(f"\n[cyan]⏱️ Performance:[/cyan]")
+
+    console.print("\n[cyan]⏱️ Performance:[/cyan]")
     console.print(f"  • Scanning: {scan_time:.2f}s")
     console.print(f"  • Analysis: {analysis_time:.2f}s")
     console.print(f"  • Total: {total_time:.2f}s")
-    
+
     if parallel and len(analyzer_names) > 1:
         speedup = (len(analyzer_names) * analysis_time / len(analyzer_names)) / analysis_time
         console.print(f"  • Speedup: {speedup:.1f}x (parallel)")
-    
+
     # Format output based on format option
     if format == "table":
         _show_summary_table(results["analyzers"])
@@ -188,7 +187,7 @@ def _show_summary_table(results: dict):
     table = Table(title="Analysis Summary")
     table.add_column("Analyzer", style="cyan")
     table.add_column("Key Findings", style="white")
-    
+
     for name, data in results.items():
         if "error" not in data:
             # Extract key info based on analyzer type
@@ -205,12 +204,12 @@ def _show_summary_table(results: dict):
             elif name == "api":
                 finding = f"Endpoints: {data.get('total', 0)}, Frameworks: {', '.join(data.get('frameworks', []))}"
             else:
-                finding = f"Analyzed successfully"
-                
+                finding = "Analyzed successfully"
+
             table.add_row(name, finding)
         else:
             table.add_row(name, f"[red]Error: {data['error']}[/red]")
-    
+
     console.print(table)
 
 
@@ -219,16 +218,16 @@ def list():
     """List available analyzers"""
     container = Container()
     analyzers = container.get_analyzer_names()
-    
+
     table = Table(title="Available Analyzers")
     table.add_column("Name", style="cyan")
     table.add_column("Module", style="white")
-    
+
     for name in sorted(analyzers):
         analyzer = container.get_analyzer(name)
         if analyzer:
             table.add_row(name, analyzer.description)
-    
+
     console.print(table)
     console.print(f"\n[green]Total: {len(analyzers)} analyzers[/green]")
 

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Configuration module for Scanner v3"""
+from typing import Any, Dict, List
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List, Dict, Any, Optional
-from pathlib import Path
 
 
 class Settings(BaseSettings):
@@ -15,7 +14,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"
     )
-    
+
     # Performance profile
     profile: str = "balanced"
     log_level: str = "info"
@@ -24,11 +23,11 @@ class Settings(BaseSettings):
     max_file_size: int = 500000
     scan_timeout: int = 120
     debug: bool = False
-    
+
     # Default exclusions - CRITICAL for performance
     DEFAULT_EXCLUDE: List[str] = [
         "**/.git/**",
-        "*node_modules*", 
+        "*node_modules*",
         "**/vendor/**",
         "**/.venv/**",
         "**/venv/**",
@@ -44,7 +43,7 @@ class Settings(BaseSettings):
         "**/*.db",
         "**/output/**",
     ]
-    
+
     # Performance profiles
     PROFILES: Dict[str, Dict[str, Any]] = {
         "fast": {
@@ -63,8 +62,8 @@ class Settings(BaseSettings):
             "max_analyzers": 20,
         }
     }
-    
+
     def get_profile_settings(self) -> Dict[str, Any]:
         """Get current profile settings"""
         return self.PROFILES.get(self.profile, self.PROFILES["balanced"])
-    
+

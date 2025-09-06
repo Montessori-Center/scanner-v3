@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Secret masking utilities for Scanner v3"""
 
 def mask_secret(value: str) -> str:
@@ -13,10 +12,10 @@ def mask_secret(value: str) -> str:
     """
     if not value:
         return ""
-    
+
     if len(value) <= 8:
         return "***"
-    
+
     # Show first 3 and last 3 characters
     return f"{value[:3]}***{value[-3:]}"
 
@@ -36,7 +35,7 @@ def mask_in_dict(data: dict, sensitive_keys: list = None) -> dict:
             'password', 'token', 'key', 'secret', 'api_key',
             'private_key', 'auth', 'credential', 'pwd'
         ]
-    
+
     result = {}
     for key, value in data.items():
         if any(sk in key.lower() for sk in sensitive_keys):
@@ -45,5 +44,5 @@ def mask_in_dict(data: dict, sensitive_keys: list = None) -> dict:
             result[key] = mask_in_dict(value, sensitive_keys)
         else:
             result[key] = value
-    
+
     return result

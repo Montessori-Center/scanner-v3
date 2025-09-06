@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Data models for Scanner v3"""
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -12,23 +12,23 @@ class FileInfo(BaseModel):
     path: Path
     size: int
     extension: str
-    
+
     @property
     def name(self) -> str:
         return self.path.name
-    
+
     @property
     def suffix(self) -> str:
         return self.path.suffix
-    
+
     def read_text(self, errors: str = 'ignore') -> str:
         """Read file text content"""
         return self.path.read_text(errors=errors)
-    
+
     def relative_to(self, other: Path) -> Path:
         """Get relative path"""
         return self.path.relative_to(other)
-    
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -41,7 +41,7 @@ class ScanResult(BaseModel):
     total_size: int
     duration: float = 0.0
     timestamp: datetime = Field(default_factory=datetime.now)
-    
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -53,7 +53,7 @@ class AnalysisResult(BaseModel):
     errors: List[str] = []
     warnings: List[str] = []
     timestamp: datetime = Field(default_factory=datetime.now)
-    
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -65,13 +65,13 @@ class ScannerOutput(BaseModel):
     scan_info: Dict[str, Any]
     analyzers: Dict[str, Any]
     errors: Optional[List[str]] = []
-    
+
     class Config:
         json_encoders = {
             datetime: lambda v: v.isoformat(),
             Path: lambda v: str(v)
         }
-    
+
     def to_json(self) -> str:
         """Convert to deterministic JSON"""
         import json
@@ -84,26 +84,6 @@ class ScannerOutput(BaseModel):
         )
 
 
-class ScannerOutput(BaseModel):
-    """Unified output schema for Scanner v3 results"""
-    version: str = "3.0.0"
-    timestamp: datetime
-    scan_info: Dict[str, Any]
-    analyzers: Dict[str, Any]
-    errors: Optional[List[str]] = []
-    
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            Path: lambda v: str(v)
-        }
-    
-    def to_json(self) -> str:
-        """Convert to deterministic JSON"""
-        import json
-        return json.dumps(
-            self.dict(),
-            indent=2,
             sort_keys=True,
             ensure_ascii=False,
             default=str

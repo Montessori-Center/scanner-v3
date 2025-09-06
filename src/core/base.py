@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Base class for all analyzers"""
 from abc import ABC, abstractmethod
-from src.core.models import ScanResult, AnalysisResult
+
+from src.core.models import AnalysisResult, ScanResult
 
 
 class BaseAnalyzer(ABC):
     """Base class for all analyzer modules"""
-    
+
     name: str = "base"
     description: str = "Base analyzer"
-    
+
     @abstractmethod
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze scan results
@@ -22,11 +22,11 @@ class BaseAnalyzer(ABC):
             AnalysisResult with analyzer data
         """
         pass
-    
+
     def get_name(self) -> str:
         """Get analyzer name"""
         return self.name
-    
+
     def get_description(self) -> str:
         """Get analyzer description"""
         return self.description

@@ -1,29 +1,25 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Dependencies analyzer for all languages"""
 import json
-import yaml
+
 import tomllib
-from pathlib import Path
-from typing import Dict, List
 
 from src.core.base import BaseAnalyzer
-
 from src.core.logger import get_logger
-from src.core.models import ScanResult, AnalysisResult
+from src.core.models import AnalysisResult, ScanResult
 
 
 class DependenciesAnalyzer(BaseAnalyzer):
     """Analyze project dependencies from various package managers"""
-    
+
     name = "dependencies"
     description = "Extract dependencies from package.json, requirements.txt, etc."
 
     logger = get_logger("dependencies")
-    
+
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze project dependencies"""
-        
+
         dependencies = {
             'python': [],
             'javascript': [],
@@ -33,13 +29,13 @@ class DependenciesAnalyzer(BaseAnalyzer):
             'java': [],
             'rust': []
         }
-        
+
         lockfiles = []
         package_managers = []
-        
+
         for file in scan.files:
             file_path = file.path
-            
+
             # Python
             if file.name == 'requirements.txt':
                 try:
@@ -52,7 +48,7 @@ class DependenciesAnalyzer(BaseAnalyzer):
                     package_managers.append('pip')
                 except Exception as e:
                     self.logger.debug(f"Error parsing requirements.txt parsing: {e}")
-            
+
             elif file.name == 'Pipfile':
                 try:
                     with open(file_path) as f:
@@ -71,7 +67,7 @@ class DependenciesAnalyzer(BaseAnalyzer):
                     package_managers.append('pipenv')
                 except Exception as e:
                     self.logger.debug(f"Error parsing Pipfile parsing: {e}")
-            
+
             elif file.name == 'pyproject.toml':
                 try:
                     with open(file_path, 'rb') as f:
@@ -87,7 +83,7 @@ class DependenciesAnalyzer(BaseAnalyzer):
                             dependencies['python'].extend(deps)
                 except Exception as e:
                     self.logger.debug(f"Error parsing pyproject.toml parsing: {e}")
-            
+
             # JavaScript/Node
             elif file.name == 'package.json':
                 try:
@@ -100,7 +96,7 @@ class DependenciesAnalyzer(BaseAnalyzer):
                     package_managers.append('npm')
                 except Exception as e:
                     self.logger.debug(f"Error parsing package.json parsing: {e}")
-            
+
             # PHP
             elif file.name == 'composer.json':
                 try:
@@ -113,7 +109,7 @@ class DependenciesAnalyzer(BaseAnalyzer):
                     package_managers.append('composer')
                 except Exception as e:
                     self.logger.debug(f"Error parsing composer.json parsing: {e}")
-            
+
             # Ruby
             elif file.name == 'Gemfile':
                 try:
@@ -131,7 +127,7 @@ class DependenciesAnalyzer(BaseAnalyzer):
                     package_managers.append('bundler')
                 except Exception as e:
                     self.logger.debug(f"Error parsing Gemfile parsing: {e}")
-            
+
             # Go
             elif file.name == 'go.mod':
                 try:
@@ -144,7 +140,7 @@ class DependenciesAnalyzer(BaseAnalyzer):
                     package_managers.append('go modules')
                 except Exception as e:
                     self.logger.debug(f"Error parsing go.mod parsing: {e}")
-            
+
             # Rust
             elif file.name == 'Cargo.toml':
                 try:
@@ -155,17 +151,17 @@ class DependenciesAnalyzer(BaseAnalyzer):
                     package_managers.append('cargo')
                 except Exception as e:
                     self.logger.debug(f"Error parsing Cargo.toml parsing: {e}")
-            
+
             # Lock files
-            elif file.name in ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 
-                             'composer.lock', 'Pipfile.lock', 'poetry.lock', 
+            elif file.name in ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml',
+                             'composer.lock', 'Pipfile.lock', 'poetry.lock',
                              'Gemfile.lock', 'Cargo.lock']:
                 lockfiles.append(file.name)
-        
+
         # Count total and find primary language
         total = sum(len(deps) for deps in dependencies.values())
         primary_language = max(dependencies.keys(), key=lambda k: len(dependencies[k])) if total > 0 else 'unknown'
-        
+
         return AnalysisResult(
             analyzer=self.name,
             data={

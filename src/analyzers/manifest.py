@@ -1,49 +1,46 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Manifest analyzer - project structure and metadata"""
-from typing import List, Dict, Any
-from pathlib import Path
+from typing import Dict, List
 
 from src.core.base import BaseAnalyzer
-
-from src.core.logger import get_logger
-from src.core.models import ScanResult, AnalysisResult
-
 from src.core.constants import Limits
+from src.core.logger import get_logger
+from src.core.models import AnalysisResult, ScanResult
+
 
 class ManifestAnalyzer(BaseAnalyzer):
     """Analyze project structure and basic metadata"""
-    
+
     name = "manifest"
     description = "Project structure and metadata analysis"
 
     logger = get_logger("manifest")
-    
+
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze project manifest"""
-        
+
         # Count files by extension
         extensions: Dict[str, int] = {}
         languages: Dict[str, int] = {}
-        
+
         for file in scan.files:
             ext = file.extension.lower()
             extensions[ext] = extensions.get(ext, 0) + 1
-            
+
             # Map to languages
             lang = self._map_to_language(ext)
             if lang:
                 languages[lang] = languages.get(lang, 0) + 1
-        
+
         # Find entry points
         entry_points = self._find_entry_points(scan)
-        
+
         # Detect project type
         project_type = self._detect_project_type(scan)
-        
+
         # Get top directories
         directories = self._get_directories(scan)
-        
+
         return AnalysisResult(
             analyzer=self.name,
             data={
@@ -62,12 +59,12 @@ class ManifestAnalyzer(BaseAnalyzer):
                 "has_ci": self._has_ci(scan),
             }
         )
-    
+
     def _map_to_language(self, ext: str) -> str:
         """Map file extension to language"""
         mapping = {
             '.py': 'python',
-            '.js': 'javascript', 
+            '.js': 'javascript',
             '.jsx': 'javascript',
             '.ts': 'typescript',
             '.tsx': 'typescript',
@@ -88,11 +85,11 @@ class ManifestAnalyzer(BaseAnalyzer):
             '.dart': 'dart',
         }
         return mapping.get(ext, '')
-    
+
     def _detect_project_type(self, scan: ScanResult) -> str:
         """Detect project type from files"""
         root = scan.root
-        
+
         # Check for specific files
         if (root / "package.json").exists():
             if (root / "next.config.js").exists():
@@ -104,55 +101,55 @@ class ManifestAnalyzer(BaseAnalyzer):
             if (root / "vue.config.js").exists():
                 return "vue"
             return "nodejs"
-        
+
         if (root / "requirements.txt").exists() or (root / "setup.py").exists():
             if (root / "manage.py").exists():
                 return "django"
             if (root / "app.py").exists() or (root / "application.py").exists():
                 return "flask"
             return "python"
-        
+
         if (root / "composer.json").exists():
             if (root / "artisan").exists():
                 return "laravel"
             if (root / "symfony.lock").exists():
                 return "symfony"
             return "php"
-        
+
         if (root / "Cargo.toml").exists():
             return "rust"
-        
+
         if (root / "go.mod").exists():
             return "go"
-        
+
         if (root / "pom.xml").exists():
             return "java-maven"
-        
+
         if (root / "build.gradle").exists():
             return "java-gradle"
-        
+
         if (root / "Gemfile").exists():
             return "ruby"
-        
+
         return "unknown"
-    
+
     def _find_entry_points(self, scan: ScanResult) -> List[str]:
         """Find project entry points"""
         entry_points = []
         common_names = [
             "main.py", "app.py", "index.py", "run.py", "__main__.py",
-            "index.js", "app.js", "main.js", "server.js", 
+            "index.js", "app.js", "main.js", "server.js",
             "index.php", "app.php",
             "main.go", "main.rs", "main.java", "main.cpp",
             "index.html", "index.htm"
         ]
-        
+
         for file in scan.files:
             if file.name in common_names:
                 entry_points.append(str(file.path.relative_to(scan.root)))
-        
+
         return entry_points[:Limits.MAX_ENTRY_POINTS]  # Max 10 entry points
-    
+
     def _get_directories(self, scan: ScanResult) -> List[str]:
         """Get unique directories"""
         dirs = set()
@@ -164,7 +161,7 @@ class ManifestAnalyzer(BaseAnalyzer):
                 except ValueError as e:
                     self.logger.debug(f"Path {parent} not relative to {scan.root}: {e}")
         return sorted(list(dirs))
-    
+
     def _has_tests(self, scan: ScanResult) -> bool:
         """Check if project has tests"""
         test_dirs = {'test', 'tests', '__tests__', 'spec', 'specs'}
@@ -173,7 +170,7 @@ class ManifestAnalyzer(BaseAnalyzer):
             if any(part in test_dirs for part in parts):
                 return True
         return False
-    
+
     def _has_docs(self, scan: ScanResult) -> bool:
         """Check if project has documentation"""
         doc_files = {'README.md', 'README.rst', 'README.txt', 'docs', 'documentation'}
@@ -181,7 +178,7 @@ class ManifestAnalyzer(BaseAnalyzer):
             if file.name in doc_files or 'docs' in file.path.parts:
                 return True
         return False
-    
+
     def _has_ci(self, scan: ScanResult) -> bool:
         """Check if project has CI/CD"""
         ci_files = {'.github', '.gitlab-ci.yml', '.travis.yml', 'Jenkinsfile', '.circleci'}

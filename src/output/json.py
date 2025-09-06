@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """JSON formatter for Scanner v3 results"""
-from typing import Dict, Any
 import json
 from datetime import datetime
+from typing import Any, Dict
+
 from src.output.base import BaseFormatter
 
 
 class JSONFormatter(BaseFormatter):
     """Format analysis results as JSON"""
-    
+
     def format(self, results: Dict[str, Any]) -> str:
         """Format results as JSON
         
@@ -25,10 +25,10 @@ class JSONFormatter(BaseFormatter):
             "generated": datetime.now().isoformat(),
             "results": results
         }
-        
+
         # Pretty print with custom encoder for datetime objects
         return json.dumps(output, indent=2, default=self._json_encoder, ensure_ascii=False)
-    
+
     def _json_encoder(self, obj):
         """Custom JSON encoder for special types"""
         if hasattr(obj, 'isoformat'):

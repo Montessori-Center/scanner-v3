@@ -1,28 +1,27 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """API endpoints analyzer"""
-import re
 import json
-import yaml
-from typing import List, Dict
+import re
 from pathlib import Path
+from typing import Dict, List
+
+import yaml
 
 from src.core.base import BaseAnalyzer
-
-from src.core.logger import get_logger
 from src.core.constants import Limits
-from src.core.models import ScanResult, AnalysisResult
+from src.core.logger import get_logger
+from src.core.models import AnalysisResult, ScanResult
 
 
 class ApiAnalyzer(BaseAnalyzer):
     """Find and analyze API endpoints in the project"""
-    
+
 
     logger = get_logger("api")
     name = "api"
     description = "Extract REST API endpoints, GraphQL schemas, WebSocket routes"
 
-    
+
     # Framework-specific patterns
     PATTERNS = {
         # FastAPI/Starlette
@@ -56,18 +55,18 @@ class ApiAnalyzer(BaseAnalyzer):
             r'@RequestMapping.*value\s*=\s*["\']([^"\']+)',
         ]
     }
-    
+
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze API endpoints"""
-        
+
         endpoints = []
         openapi_files = []
         graphql_files = []
         frameworks_detected = set()
-        
+
         for file in scan.files:
             file_path = file.path
-            
+
             # Check for OpenAPI/Swagger files
             if file.name in ['openapi.json', 'openapi.yaml', 'swagger.json', 'swagger.yaml']:
                 openapi_files.append(file.name)
@@ -75,16 +74,16 @@ class ApiAnalyzer(BaseAnalyzer):
                     endpoints.extend(self._parse_openapi(file_path))
                 except Exception as e:
                     self.logger.debug(f"Error in OpenAPI parsing: {e}")
-            
+
             # Check for GraphQL schemas
             elif file.suffix in ['.graphql', '.gql'] or file.name == 'schema.graphql':
                 graphql_files.append(file.name)
-            
+
             # Parse source code for endpoints
             elif file.suffix in ['.py', '.js', '.ts', '.php', '.java', '.rb']:
                 try:
                     content = file.read_text(errors='ignore')[:Limits.MAX_FILE_CONTENT_SIZE * 2]  # First 200KB
-                    
+
                     # Try all patterns
                     for framework, patterns in self.PATTERNS.items():
                         for pattern in patterns:
@@ -101,7 +100,7 @@ class ApiAnalyzer(BaseAnalyzer):
                                     else:
                                         path = match
                                         method = 'GET'
-                                    
+
                                     endpoints.append({
                                         'method': method.upper() if method.upper() in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] else 'GET',
                                         'path': path,
@@ -110,7 +109,7 @@ class ApiAnalyzer(BaseAnalyzer):
                                     })
                 except Exception as e:
                     self.logger.debug(f"Error in endpoint extraction: {e}")
-        
+
         # Deduplicate endpoints
         unique_endpoints = []
         seen = set()
@@ -119,13 +118,13 @@ class ApiAnalyzer(BaseAnalyzer):
             if key not in seen:
                 seen.add(key)
                 unique_endpoints.append(ep)
-        
+
         # Count by method
         method_counts = {}
         for ep in unique_endpoints:
             method = ep.get('method', 'GET')
             method_counts[method] = method_counts.get(method, 0) + 1
-        
+
         return AnalysisResult(
             analyzer=self.name,
             data={
@@ -139,18 +138,18 @@ class ApiAnalyzer(BaseAnalyzer):
                 "graphql_files": graphql_files[:5]
             }
         )
-    
+
     def _parse_openapi(self, file_path: Path) -> List[Dict]:
         """Parse OpenAPI specification file"""
         endpoints = []
-        
+
         try:
             with open(file_path) as f:
                 if file_path.suffix == '.json':
                     spec = json.load(f)
                 else:
                     spec = yaml.safe_load(f)
-                
+
                 if spec and 'paths' in spec:
                     for path, methods in spec['paths'].items():
                         for method in methods:
@@ -163,5 +162,5 @@ class ApiAnalyzer(BaseAnalyzer):
                                 })
         except Exception as e:
             self.logger.debug(f"Error in OpenAPI specification parsing: {e}")
-        
+
         return endpoints

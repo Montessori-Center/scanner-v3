@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Dependency Injection container with auto-discovery"""
-import pkgutil
 import importlib
-from typing import Dict, Type, Optional, List
+import pkgutil
 from pathlib import Path
+from typing import Dict, List, Optional, Type
 
 from src.core.base import BaseAnalyzer
-from src.core.scanner import Scanner
 from src.core.config import Settings
 from src.core.logger import get_logger
+from src.core.scanner import Scanner
 
 
 class Container:
     """DI Container with automatic analyzer discovery"""
-    
+
     def __init__(self, settings: Optional[Settings] = None):
         self.settings = settings or Settings()
         self._scanner = Scanner(self.settings)
@@ -22,40 +21,40 @@ class Container:
         self._failed_analyzers = {}  # Track failed analyzers
         self._analyzers = self._discover_analyzers()
         self._instances = {}
-    
+
     @property
     def scanner(self) -> Scanner:
         """Get scanner instance"""
         return self._scanner
-    
+
     def _discover_analyzers(self) -> Dict[str, Type[BaseAnalyzer]]:
         """Automatically discover all analyzers via pkgutil"""
         analyzers = {}
-        
+
         # Get analyzers package path
         analyzers_path = Path(__file__).parent.parent / "analyzers"
-        
+
         if not analyzers_path.exists():
             self.logger.warning(f"Analyzers path not found: {analyzers_path}")
             return analyzers
-        
+
         # Import analyzers package
         try:
             import src.analyzers as pkg
-            
+
             # Find all modules in package
             for importer, modname, ispkg in pkgutil.iter_modules(
-                pkg.__path__, 
+                pkg.__path__,
                 prefix=pkg.__name__ + "."
             ):
                 if ispkg:
                     continue  # Skip subpackages
-                    
+
                 try:
                     # Import module
                     self.logger.debug(f"Attempting to import: {modname}")
                     module = importlib.import_module(modname)
-                    
+
                     # Find analyzer classes
                     for item_name in dir(module):
                         if item_name.endswith('Analyzer') and item_name != 'BaseAnalyzer':
@@ -72,22 +71,22 @@ class Container:
                 except Exception as e:
                     self.logger.error(f"✗ Error processing module {modname}: {e}")
                     self._failed_analyzers[modname] = str(e)
-                    
+
         except ImportError as e:
             self.logger.error(f"Failed to import analyzers package: {e}")
-        
+
         self.logger.info(f"Total analyzers discovered: {len(analyzers)}")
         if self._failed_analyzers:
             self.logger.warning(f"Failed to load {len(self._failed_analyzers)} modules")
-        
+
         return analyzers
-    
+
     def get_analyzer(self, name: str) -> Optional[BaseAnalyzer]:
         """Get analyzer instance by name"""
         # Check if already instantiated
         if name in self._instances:
             return self._instances[name]
-        
+
         # Create new instance
         if name in self._analyzers:
             try:
@@ -99,22 +98,22 @@ class Container:
                 self.logger.error(f"Failed to instantiate analyzer {name}: {e}")
                 self._failed_analyzers[name] = str(e)
                 return None
-        
+
         self.logger.warning(f"Analyzer not found: {name}")
         return None
-    
+
     def list_analyzers(self) -> Dict[str, Type[BaseAnalyzer]]:
         """List all available analyzers"""
         return self._analyzers
-    
+
     def get_analyzer_names(self) -> List[str]:
         """Get list of analyzer names"""
         return list(self._analyzers.keys())
-    
+
     def get_failed_analyzers(self) -> Dict[str, str]:
         """Get dictionary of failed analyzers and their errors"""
         return self._failed_analyzers
-    
+
     def get_status(self) -> Dict:
         """Get container status"""
         return {

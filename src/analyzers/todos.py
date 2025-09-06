@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """TODOs and technical debt analyzer"""
 import re
-from typing import Dict, List
 from collections import defaultdict
 
 from src.core.base import BaseAnalyzer
-from src.core.models import ScanResult, AnalysisResult
-
-from src.core.logger import get_logger
 from src.core.constants import Limits
 from src.core.file_reader import ChunkReader
+from src.core.logger import get_logger
+from src.core.models import AnalysisResult, ScanResult
 
 
 class TodosAnalyzer(BaseAnalyzer):
     """Find and analyze TODOs, FIXMEs, HACKs and other technical debt markers"""
-    
+
     name = "todos"
     description = "Extract TODO, FIXME, HACK, BUG comments and technical debt"
 
     logger = get_logger("todos")
-    
+
     # Patterns for different markers
     PATTERNS = {
         'TODO': r'#\s*TODO:?\s*(.*)|//\s*TODO:?\s*(.*)|/\*\s*TODO:?\s*(.*?)\*/',
@@ -33,41 +30,40 @@ class TodosAnalyzer(BaseAnalyzer):
         'NOTE': r'#\s*NOTE:?\s*(.*)|//\s*NOTE:?\s*(.*)|/\*\s*NOTE:?\s*(.*?)\*/',
         'WARNING': r'#\s*WARNING:?\s*(.*)|//\s*WARNING:?\s*(.*)|/\*\s*WARNING:?\s*(.*?)\*/',
     }
-    
+
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze technical debt markers"""
-        
+
         todos = defaultdict(list)
         files_with_debt = set()
-        
+
         # Only check source code files
         code_extensions = {
-            '.py', '.js', '.jsx', '.ts', '.tsx', '.php', '.java', 
+            '.py', '.js', '.jsx', '.ts', '.tsx', '.php', '.java',
             '.go', '.rs', '.rb', '.cs', '.cpp', '.c', '.h', '.hpp',
             '.swift', '.kt', '.scala', '.lua', '.r', '.m', '.dart'
         }
-        
+
         for file in scan.files:
             if file.suffix not in code_extensions:
                 continue
-            
+
             try:
                 content = ChunkReader.read_limited(file.path)  # First 100KB
                 file_has_debt = False
-                
+
                 # Split into lines for line numbers
-                lines = content.split('\n')
-                
+
                 for tag, pattern in self.PATTERNS.items():
                     # Find all matches in the file
                     for match in re.finditer(pattern, content, re.IGNORECASE | re.MULTILINE):
                         # Get the actual comment text
                         groups = match.groups()
                         comment_text = next((g for g in groups if g), '').strip()
-                        
+
                         # Find line number
                         line_num = content[:match.start()].count('\n') + 1
-                        
+
                         if comment_text:
                             todos[tag].append({
                                 'file': str(file.path.relative_to(scan.root)),
@@ -75,21 +71,21 @@ class TodosAnalyzer(BaseAnalyzer):
                                 'text': comment_text[:Limits.MAX_TEXT_PREVIEW]  # Max 200 chars
                             })
                             file_has_debt = True
-                            
+
                             # Limit per tag
                             if len(todos[tag]) > Limits.MAX_TODOS_PER_TYPE:
                                 break
-                
-                
+
+
                 # Check for multiline comments
                 for style, pattern in self.MULTILINE_PATTERNS.items():
                     for match in re.finditer(pattern, content, re.DOTALL | re.IGNORECASE):
                         tag = match.group(1).upper()
                         comment_text = match.group(2).strip() if match.lastindex > 1 else ''
-                        
+
                         # Find line number
                         line_num = content[:match.start()].count('\n') + 1
-                        
+
                         if comment_text and tag in todos:
                             todos[tag].append({
                                 'file': str(file.path.relative_to(scan.root)),
@@ -99,16 +95,16 @@ class TodosAnalyzer(BaseAnalyzer):
                             })
                             file_has_debt = True
 
-                
+
                 # Check for multiline comments
                 for style, pattern in self.MULTILINE_PATTERNS.items():
                     for match in re.finditer(pattern, content, re.DOTALL | re.IGNORECASE):
                         tag = match.group(1).upper()
                         comment_text = match.group(2).strip() if match.lastindex > 1 else ''
-                        
+
                         # Find line number
                         line_num = content[:match.start()].count('\n') + 1
-                        
+
                         if comment_text and tag in todos:
                             todos[tag].append({
                                 'file': str(file.path.relative_to(scan.root)),
@@ -118,16 +114,16 @@ class TodosAnalyzer(BaseAnalyzer):
                             })
                             file_has_debt = True
 
-                
+
                 # Check for multiline comments
                 for style, pattern in self.MULTILINE_PATTERNS.items():
                     for match in re.finditer(pattern, content, re.DOTALL | re.IGNORECASE):
                         tag = match.group(1).upper()
                         comment_text = match.group(2).strip() if match.lastindex > 1 else ''
-                        
+
                         # Find line number
                         line_num = content[:match.start()].count('\n') + 1
-                        
+
                         if comment_text and tag in todos:
                             todos[tag].append({
                                 'file': str(file.path.relative_to(scan.root)),
@@ -139,24 +135,24 @@ class TodosAnalyzer(BaseAnalyzer):
 
                 if file_has_debt:
                     files_with_debt.add(str(file.path.relative_to(scan.root)))
-                    
+
             except Exception as e:
                 self.logger.debug(f"Error analyzing TODOs in file: {e}")
-        
+
         # Calculate statistics
         total_count = sum(len(items) for items in todos.values())
-        
+
         # Priority classification
         high_priority = len(todos['FIXME']) + len(todos['BUG'])
         medium_priority = len(todos['TODO']) + len(todos['HACK']) + len(todos['XXX'])
         low_priority = len(todos['OPTIMIZE']) + len(todos['REFACTOR']) + len(todos['NOTE'])
-        
+
         # Convert defaultdict to dict and limit items
         todos_dict = {}
         for tag in self.PATTERNS.keys():
             if todos[tag]:
                 todos_dict[tag] = todos[tag][:20]  # Max 20 per type
-        
+
         return AnalysisResult(
             analyzer=self.name,
             data={
@@ -168,7 +164,7 @@ class TodosAnalyzer(BaseAnalyzer):
                 },
                 "by_priority": {
                     "high": high_priority,
-                    "medium": medium_priority, 
+                    "medium": medium_priority,
                     "low": low_priority
                 },
                 "top_files": list(files_with_debt)[:10]

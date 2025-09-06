@@ -1,29 +1,27 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Docker and Kubernetes configuration analyzer"""
-import json
-import yaml
 import re
-from typing import Dict, List
 from pathlib import Path
+from typing import Dict, List
+
+import yaml
 
 from src.core.base import BaseAnalyzer
-
 from src.core.logger import get_logger
-from src.core.models import ScanResult, AnalysisResult
+from src.core.models import AnalysisResult, ScanResult
 
 
 class DockerAnalyzer(BaseAnalyzer):
     """Analyze Docker, Docker Compose and Kubernetes configurations"""
-    
+
     name = "docker"
     description = "Docker, Docker Compose, Kubernetes configurations"
 
     logger = get_logger("docker")
-    
+
     async def analyze(self, scan: ScanResult) -> AnalysisResult:
         """Analyze containerization configs"""
-        
+
         dockerfiles = []
         compose_files = []
         compose_services = []
@@ -31,11 +29,11 @@ class DockerAnalyzer(BaseAnalyzer):
         k8s_resources = []
         images = set()
         exposed_ports = set()
-        
+
         for file in scan.files:
             file_path = file.path
             file_name = file.name.lower()
-            
+
             # Dockerfiles
             if 'dockerfile' in file_name:
                 dockerfile_info = self._parse_dockerfile(file_path)
@@ -46,22 +44,22 @@ class DockerAnalyzer(BaseAnalyzer):
                     'commands': dockerfile_info.get('commands', 0),
                     'size_estimate': dockerfile_info.get('layers', 0)
                 })
-                
+
                 if dockerfile_info.get('base_image'):
                     images.add(dockerfile_info['base_image'])
                 exposed_ports.update(dockerfile_info.get('ports', []))
-            
+
             # Docker Compose files
             elif file_name in ['docker-compose.yml', 'docker-compose.yaml'] or 'docker-compose' in file_name:
                 compose_files.append(str(file.path.relative_to(scan.root)))
                 services = self._parse_docker_compose(file_path)
                 compose_services.extend(services)
-                
+
                 for service in services:
                     if service.get('image'):
                         images.add(service['image'])
                     exposed_ports.update(service.get('ports', []))
-            
+
             # Kubernetes manifests
             elif file.suffix in ['.yaml', '.yml']:
                 # Check if it's a k8s manifest
@@ -70,15 +68,15 @@ class DockerAnalyzer(BaseAnalyzer):
                     if manifest_info:
                         k8s_manifests.append(str(file.path.relative_to(scan.root)))
                         k8s_resources.append(manifest_info)
-                        
+
                         # Extract images from k8s
                         for container in manifest_info.get('containers', []):
                             if container.get('image'):
                                 images.add(container['image'])
-        
+
         # Analyze images for security
         vulnerable_images = self._check_vulnerable_images(list(images))
-        
+
         return AnalysisResult(
             analyzer=self.name,
             data={
@@ -102,7 +100,7 @@ class DockerAnalyzer(BaseAnalyzer):
                 "orchestration": self._detect_orchestration(dockerfiles, compose_files, k8s_manifests)
             }
         )
-    
+
     def _parse_dockerfile(self, file_path: Path) -> Dict:
         """Parse Dockerfile for information"""
         info = {
@@ -113,53 +111,53 @@ class DockerAnalyzer(BaseAnalyzer):
             'env_vars': [],
             'volumes': []
         }
-        
+
         try:
             with open(file_path) as f:
                 for line in f:
                     line = line.strip()
-                    
+
                     # Count layers
                     if line and not line.startswith('#'):
                         info['layers'] += 1
-                    
+
                     # FROM instruction
                     if line.startswith('FROM '):
                         info['base_image'] = line.split()[1]
-                    
+
                     # EXPOSE instruction
                     elif line.startswith('EXPOSE '):
                         ports = line.split()[1:]
                         info['ports'].extend(ports)
-                    
+
                     # RUN/CMD/ENTRYPOINT instructions
                     elif line.startswith(('RUN ', 'CMD ', 'ENTRYPOINT ')):
                         info['commands'] += 1
-                    
+
                     # ENV instruction
                     elif line.startswith('ENV '):
                         parts = line.split(None, 1)[1]
                         if '=' in parts:
                             env_var = parts.split('=')[0]
                             info['env_vars'].append(env_var)
-                    
+
                     # VOLUME instruction
                     elif line.startswith('VOLUME '):
                         volume = line.split(None, 1)[1]
                         info['volumes'].append(volume)
         except Exception as e:
             self.logger.debug(f"Error in Dockerfile parsing: {e}")
-        
+
         return info
-    
+
     def _parse_docker_compose(self, file_path: Path) -> List[Dict]:
         """Parse docker-compose.yml file"""
         services = []
-        
+
         try:
             with open(file_path) as f:
                 compose = yaml.safe_load(f)
-                
+
                 if compose and 'services' in compose:
                     for service_name, config in compose['services'].items():
                         service_info = {
@@ -171,7 +169,7 @@ class DockerAnalyzer(BaseAnalyzer):
                             'depends_on': config.get('depends_on', []),
                             'environment': len(config.get('environment', {}))
                         }
-                        
+
                         # Parse ports
                         if 'ports' in config:
                             for port in config['ports']:
@@ -181,38 +179,38 @@ class DockerAnalyzer(BaseAnalyzer):
                                         service_info['ports'].append(port.split(':')[0])
                                     else:
                                         service_info['ports'].append(port)
-                        
+
                         services.append(service_info)
         except Exception as e:
             self.logger.debug(f"Error in docker-compose.yml parsing: {e}")
-        
+
         return services
-    
+
     def _is_kubernetes_manifest(self, file_path: Path) -> bool:
         """Check if file is a Kubernetes manifest"""
         try:
             with open(file_path) as f:
                 content = f.read(1000)  # Read first 1KB
-                
+
                 # Check for k8s keywords
                 k8s_keywords = ['apiVersion:', 'kind:', 'metadata:', 'spec:']
                 if sum(1 for kw in k8s_keywords if kw in content) >= 3:
                     return True
-                    
+
                 # Check for specific k8s resources
                 k8s_kinds = ['Deployment', 'Service', 'Pod', 'ConfigMap', 'Secret', 'Ingress', 'StatefulSet', 'DaemonSet']
                 return any(f'kind: {kind}' in content for kind in k8s_kinds)
         except Exception as e:
             self.logger.debug(f"Error in Kubernetes manifest check: {e}")
-        
+
         return False
-    
+
     def _parse_k8s_manifest(self, file_path: Path) -> Dict:
         """Parse Kubernetes manifest"""
         try:
             with open(file_path) as f:
                 manifest = yaml.safe_load(f)
-                
+
                 if manifest and 'kind' in manifest:
                     info = {
                         'kind': manifest.get('kind'),
@@ -220,16 +218,16 @@ class DockerAnalyzer(BaseAnalyzer):
                         'namespace': manifest.get('metadata', {}).get('namespace', 'default'),
                         'containers': []
                     }
-                    
+
                     # Extract container info
                     spec = manifest.get('spec', {})
-                    
+
                     # For Deployments, StatefulSets, etc.
                     if 'template' in spec:
                         pod_spec = spec['template'].get('spec', {})
                     else:
                         pod_spec = spec
-                    
+
                     # Extract containers
                     for container in pod_spec.get('containers', []):
                         info['containers'].append({
@@ -237,17 +235,17 @@ class DockerAnalyzer(BaseAnalyzer):
                             'image': container.get('image'),
                             'ports': [p.get('containerPort') for p in container.get('ports', [])]
                         })
-                    
+
                     return info
         except Exception as e:
             self.logger.debug(f"Error in Kubernetes manifest parsing: {e}")
-        
+
         return None
-    
+
     def _check_vulnerable_images(self, images: List[str]) -> List[str]:
         """Check for known vulnerable or outdated images"""
         vulnerable = []
-        
+
         # Patterns for potentially vulnerable images
         vulnerable_patterns = [
             ('alpine:3.[0-9]$', 'Old Alpine version'),
@@ -259,15 +257,15 @@ class DockerAnalyzer(BaseAnalyzer):
             ('mysql:5.[0-6]', 'Old MySQL version'),
             ('redis:[0-3]', 'Old Redis version')
         ]
-        
+
         for image in images:
             for pattern, reason in vulnerable_patterns:
                 if re.search(pattern, image, re.IGNORECASE):
                     vulnerable.append(f"{image} - {reason}")
                     break
-        
+
         return vulnerable[:10]  # Top 10
-    
+
     def _detect_orchestration(self, dockerfiles: List, compose_files: List, k8s_manifests: List) -> str:
         """Detect primary orchestration platform"""
         if k8s_manifests:
