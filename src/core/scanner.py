@@ -66,23 +66,41 @@ class Scanner:
             total_size=sum(f.size for f in files),
             duration=duration
         )
-    
+ 
+    def _load_exclude_patterns(self):
+        """Load patterns from config/exclude.conf"""
+        patterns = []
+        exclude_file = Path("config/exclude.conf")
+        
+        if exclude_file.exists():
+            with open(exclude_file) as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#"):
+                        patterns.append(line)
+        
+        if not patterns:
+            patterns = self.settings.DEFAULT_EXCLUDE
+        
+        return patterns
+ 
     def _should_exclude(self, file_path: Path, root: Path) -> bool:
         """Check if file should be excluded"""
         try:
             relative = str(file_path.relative_to(root))
             
-            for pattern in self.settings.DEFAULT_EXCLUDE:
-                # Simple pattern matching
-                pattern_clean = pattern.replace("**", "*")
-                if "*" in pattern_clean:
-                    if fnmatch(relative, pattern_clean):
-                        return True
-                else:
-                    # Direct substring match
-                    if pattern_clean.strip("*/") in relative:
-                        return True
-        except:
+            if not hasattr(self, '_exclude_patterns'):
+                self._exclude_patterns = self._load_exclude_patterns()
+            
+            for pattern in self._exclude_patterns:
+                # Check both full path and relative path
+                if file_path.match(pattern) or Path(relative).match(pattern):
+                    return True
+                # Check if pattern is in path string
+                if pattern.strip("*/") in str(file_path):
+                    return True
+                    
+        except Exception:
             pass
         
         return False
