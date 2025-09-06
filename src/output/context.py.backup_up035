@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """LLM Context Builder for Scanner v3"""
-from typing import Any
+from typing import Any, Dict
 
 from src.output.base import BaseFormatter
 

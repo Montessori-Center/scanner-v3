@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Efficient file reading with chunking support"""
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
 
 from src.core.constants import Limits
 from src.core.logger import get_logger

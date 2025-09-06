@@ -2,7 +2,7 @@
 """Database Schema and Structure Analyzer"""
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
 
 from src.core.base import BaseAnalyzer
 from src.core.logger import get_logger

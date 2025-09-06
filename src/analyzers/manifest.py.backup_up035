@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Manifest analyzer - project structure and metadata"""
-# removed typing.List import
+from typing import Dict, List
 
 from src.core.base import BaseAnalyzer
 from src.core.constants import Limits

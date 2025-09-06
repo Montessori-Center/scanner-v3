@@ -4,7 +4,7 @@ setup(
     name="scanner-v3",
     version="3.0.0",
     packages=find_packages(),
-    python_requires=">=3.8",
+    python_requires=">=3.11",
     install_requires=[
         "typer>=0.9.0",
         "rich>=13.0.0",

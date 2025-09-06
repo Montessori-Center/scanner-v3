@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "scanner-v3"
+version = "3.0.0"
+description = "Modern project analyzer for LLM context generation"
+authors = ["Sergey <sergei@montessori.ua>"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+typer = ">=0.9.0"
+rich = ">=13.0.0"
+pydantic = ">=2.0.0"
+pydantic-settings = ">=2.0.0"
+aiofiles = ">=23.0.0"
+python-dotenv = ">=1.0.0"
+pyyaml = ">=6.0.0"
+pygments = "*"
+tree-sitter = "*"
+astroid = "*"
+radon = "*"
+jedi = "*"
+libcst = "*"
+sqlparse = "*"
+pipdeptree = "*"
+requirements-detector = "*"
+safety = "*"
+johnnydep = "*"
+gitpython = "*"
+pydriller = "*"
+bandit = "*"
+openapi-spec-validator = "*"
+markdown-it-py = "*"
+pytz = "*"
+types-pytz = "*"
+lizard = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+pytest-asyncio = "*"
+pytest-cov = "*"
+ruff = "*"
+mypy = "*"
+black = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+scanner = "src.cli:app"

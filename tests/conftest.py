@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Shared fixtures for tests"""
-import pytest
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
-from src.core.scanner import Scanner
+
+import pytest
+
 from src.core.config import Settings
-from src.core.models import ScanResult, FileInfo
+from src.core.models import FileInfo, ScanResult
+from src.core.scanner import Scanner
 
 
 @pytest.fixture
@@ -15,17 +16,17 @@ def temp_project():
     """Create a temporary project structure for testing"""
     temp_dir = tempfile.mkdtemp()
     project_path = Path(temp_dir)
-    
+
     # Create basic project structure
     (project_path / "src").mkdir()
     (project_path / "tests").mkdir()
     (project_path / "docs").mkdir()
-    
+
     # Create some test files
     (project_path / "README.md").write_text("# Test Project\nThis is a test project.")
     (project_path / "requirements.txt").write_text("pytest==7.4.0\nflask==2.3.0")
     (project_path / ".env").write_text("API_KEY=test123\nDATABASE_URL=postgresql://localhost/test")
-    
+
     # Create Python files
     (project_path / "src" / "__init__.py").touch()
     (project_path / "src" / "main.py").write_text("""
@@ -36,11 +37,11 @@ def hello_world():
 class TestClass:
     def __init__(self):
         self.value = 42
-        
+
 # TODO: Add more features
 # FIXME: Handle edge cases
 """)
-    
+
     # Create API file
     (project_path / "src" / "api.py").write_text("""
 from flask import Flask
@@ -55,9 +56,9 @@ def get_users():
 def create_post():
     return {"status": "created"}
 """)
-    
+
     yield project_path
-    
+
     # Cleanup
     shutil.rmtree(temp_dir)
 
@@ -73,7 +74,7 @@ def mock_scan_result(temp_project):
                 size=file_path.stat().st_size,
                 extension=file_path.suffix
             ))
-    
+
     return ScanResult(
         root=temp_project,
         files=files,

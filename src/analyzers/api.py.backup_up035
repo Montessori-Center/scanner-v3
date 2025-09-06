@@ -3,8 +3,8 @@
 import json
 import re
 from pathlib import Path
+from typing import Dict, List
 
-# removed typing.List import
 import yaml
 
 from src.core.base import BaseAnalyzer

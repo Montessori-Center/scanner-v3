@@ -2,8 +2,8 @@
 """Errors and Logs Analyzer"""
 import re
 from collections import Counter
+from typing import Dict
 
-# removed typing.Dict import
 from src.core.base import BaseAnalyzer
 from src.core.logger import get_logger
 from src.core.models import AnalysisResult, ScanResult

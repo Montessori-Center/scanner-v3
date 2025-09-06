@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Security vulnerabilities analyzer"""
 import re
+from typing import Dict, List
 
-# removed typing.List import
 from src.core.base import BaseAnalyzer
 from src.core.logger import get_logger
 from src.core.models import AnalysisResult, ScanResult

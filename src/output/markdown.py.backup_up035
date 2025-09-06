@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Markdown formatter for Scanner v3 results"""
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict, List
 
 from src.output.base import BaseFormatter
 
